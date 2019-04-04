@@ -10,52 +10,57 @@ public class MiniRobot extends Agent {
 	private int timeSearch;
 
 	public MiniRobot(int x, int y) {
-		// TODO Auto-generated constructor stub
-		super(x, y,100, "MiniRobot");
+		super(x, y, 100, "MiniRobot");
 	}
 
 	public void update() {
 
 		if (isDead()) {
-			//System.out.println("MiniRobot is Dead");
-			
+			// System.out.println("MiniRobot is Dead");
+
 		} else {
 
 			if (canDie()) {
-				//System.out.println("MiniRobot is dying because of water or lava");
+				// System.out.println("MiniRobot is dying because of water or lava");
 				this.die();
 			} else {
 
 				if (this.detectPlayer()) {
-					
-					//System.out.println("MiniRobot detected a player");
+
+					// System.out.println("MiniRobot detected a player");
 					Player player = this.getDetectedPlayer();
 
 					if (this.nextTo(player)) {
-						//System.out.println("MiniRobot is next to a player");
+						// System.out.println("MiniRobot is next to a player");
 						this.stayAtCurrentPosition();
 						this.attack(player);
 
 					} else {
 
 						this.path = PathFinder.pathfinder.getPath(this.cur_pos, player.cur_pos);
-						PathFinder.pathfinder.clear();
+						
 						if (existPathTo(player.cur_pos)) {
-							//System.out.println("MiniRobot is walking towards a player");
+							// System.out.println("MiniRobot is walking towards a player");
 							this.walkTo(player);
 
 						} else {
 
 							if (random_pos == null || this.cur_pos.equals(this.random_pos)) {
-								random_pos = new Position(0, 0);
-							}
-							if (existPathTo(random_pos)) {
-								//System.out.println("MiniRobot walks toward a target");
-								this.walkTo(random_pos);
+								ArrayList<Position> legalPosition = Ecosystem.map.getAccessiblePositionMiniRobot();
+								if (legalPosition.size() > 0) {
+									random_pos = legalPosition.remove((int) (legalPosition.size() * Math.random()));
+									if (existPathTo(random_pos)) {
+										// System.out.println("MiniRobot walks toward a target");
+										this.walkTo(random_pos);
 
-							} else {
-								//System.out.println("MiniRobot walks randomly");
-								this.walkRandomly();
+									} else {
+										// System.out.println("MiniRobot walks randomly");
+										// this.walkRandomly();
+
+									}
+								} else {
+
+								}
 
 							}
 
@@ -66,7 +71,22 @@ public class MiniRobot extends Agent {
 
 					if (random_pos == null || this.cur_pos.equals(this.random_pos) || this.path == null
 							|| this.path.size() == 0 || timeSearch < 0) {
-						random_pos = new Position();
+
+						ArrayList<Position> legalPosition = Ecosystem.map.getAccessiblePositionMiniRobot();
+						if (legalPosition.size() > 0) {
+							random_pos = legalPosition.remove((int) (legalPosition.size() * Math.random()));
+							if (existPathTo(random_pos)) {
+								// System.out.println("MiniRobot walks toward a target");
+								this.walkTo(random_pos);
+
+							} else {
+								// System.out.println("MiniRobot walks randomly");
+								// this.walkRandomly();
+
+							}
+						} else {
+
+						}
 						timeSearch = 30;
 					}
 					if (existPathTo(random_pos)) {
@@ -74,59 +94,15 @@ public class MiniRobot extends Agent {
 						this.walkTo(random_pos);
 
 					} else {
-
+						timeSearch--;
 						this.walkRandomly();
 
 					}
 
 				}
+
 			}
 		}
-
-		// //System.out.println(this);
-		// if(this.life <= 0) {
-		// Robot.generated--;
-		// }
-		// Player playerNextTo = getNextToPlayer();
-		//
-		// if(playerNextTo != null) {
-		// this.next_pos.x = this.cur_pos.x;
-		// this.next_pos.y = this.cur_pos.y;
-		// attack(playerNextTo);
-		// if(playerNextTo.life <= 0) {
-		// this.level++;
-		// }
-		//
-		// }
-		// else {
-		// if(target == null || path.size() == 0 || timeSearch == 0) {
-		//
-		// target = new Position((int)(Math.random() *
-		// Ecosystem.mapWidth),(int)(Math.random() * Ecosystem.mapHeight));
-		// ////System.out.println(target.x +", " + target.y);
-		// timeSearch = 30;
-		// }
-		// timeSearch--;
-		// //finding the path to the object/agent
-		// path = PathFinder.pathfinder.getPath(this.cur_pos, this.target);
-		//
-		// //the path has to be cleared because we used it
-		// PathFinder.pathfinder.clear();
-		// //if we found a path to the target then we set the next position we have to
-		// go
-		// //and if the next position we are going to go is the target then we unset the
-		// target
-		// if (!path.isEmpty()) {
-		// Position next = path.peekLast();
-		// this.next_pos.x = next.x;
-		// this.next_pos.y = next.y;
-		// if (next_pos.x == target.x && next_pos.y == target.y) {
-		// target = null;
-		// }
-		//
-		// }
-		// }
-
 	}
 
 	private void walkTo(Player player) {
@@ -148,10 +124,9 @@ public class MiniRobot extends Agent {
 	}
 
 	private boolean existPathTo(Position item) {
-		// TODO Auto-generated method stub
 		this.path = PathFinder.pathfinder.getPath(this.cur_pos, item);
-		PathFinder.pathfinder.clear();
-		return this.path != null && this.path.size() > 0;
+		
+		return this.path.size() > 0;
 	}
 
 	private void stayAtCurrentPosition() {
@@ -160,59 +135,7 @@ public class MiniRobot extends Agent {
 
 	}
 
-	private void walkRandomly() {
-		this.next_pos.x = cur_pos.x;
-		this.next_pos.y = cur_pos.y;
-		ArrayList<Position> possible_dir = new ArrayList<Position>();
-		if (canMoveUp()) {
-			possible_dir.add(this.cur_pos.getAbove());
-		}
-		if (canMoveDown()) {
-			possible_dir.add(this.cur_pos.getDown());
-		}
-		if (canMoveLeft()) {
-			possible_dir.add(this.cur_pos.getLeft());
-		}
-		if (canMoveRight()) {
-			possible_dir.add(this.cur_pos.getRight());
-		}
-
-		if (possible_dir.isEmpty()) {
-			return;
-		}
-		Position rand_next_pos = possible_dir.get((int) (Math.random() * possible_dir.size()));
-		this.next_pos.x = rand_next_pos.x;
-		this.next_pos.y = rand_next_pos.y;
-
-	}
-
-	private boolean canMoveRight() {
-
-		return (Ecosystem.map.getTextureRight(this.cur_pos.x, this.cur_pos.y) == MapTextureID.GROUND
-				|| Ecosystem.map.getTextureRight(this.cur_pos.x, this.cur_pos.y) == MapTextureID.SPAWN)
-				&& (Ecosystem.map.getEntitiesRight(this.cur_pos.x, this.cur_pos.y) == MapEntitiesID.NOTHING);
-	}
-
-	private boolean canMoveLeft() {
-		// TODO Auto-generated method stubfez
-		return (Ecosystem.map.getTextureLeft(this.cur_pos.x, this.cur_pos.y) == MapTextureID.GROUND
-				|| Ecosystem.map.getTextureLeft(this.cur_pos.x, this.cur_pos.y) == MapTextureID.SPAWN)
-				&& (Ecosystem.map.getEntitiesLeft(this.cur_pos.x, this.cur_pos.y) == MapEntitiesID.NOTHING);
-	}
-
-	private boolean canMoveDown() {
-		// TODO Auto-generated method stubf
-		return (Ecosystem.map.getTextureDown(this.cur_pos.x, this.cur_pos.y) == MapTextureID.GROUND
-				|| Ecosystem.map.getTextureDown(this.cur_pos.x, this.cur_pos.y) == MapTextureID.SPAWN)
-				&& (Ecosystem.map.getEntitiesDown(this.cur_pos.x, this.cur_pos.y) == MapEntitiesID.NOTHING);
-	}
-
-	private boolean canMoveUp() {
-		// TODO Auto-generated method stub
-		return (Ecosystem.map.getTextureDown(this.cur_pos.x, this.cur_pos.y) == MapTextureID.GROUND
-				|| Ecosystem.map.getTextureDown(this.cur_pos.x, this.cur_pos.y) == MapTextureID.SPAWN)
-				&& (Ecosystem.map.getEntitiesUp(this.cur_pos.x, this.cur_pos.y) == MapEntitiesID.NOTHING);
-	}
+	
 
 	private boolean nextTo(Player player) {
 
@@ -221,7 +144,7 @@ public class MiniRobot extends Agent {
 	}
 
 	private void die() {
-		// TODO Auto-generated method stub
+
 		this.life = 0;
 	}
 
@@ -230,9 +153,6 @@ public class MiniRobot extends Agent {
 		return Ecosystem.map.getMapTexture()[this.cur_pos.x][this.cur_pos.y] == MapTextureID.LAVA
 				|| Ecosystem.map.getMapTexture()[this.cur_pos.x][this.cur_pos.y] == MapTextureID.WATER;
 	}
-
-	
-
 
 	private boolean isDead() {
 
@@ -264,7 +184,6 @@ public class MiniRobot extends Agent {
 	}
 
 	private int distance(MiniRobot robot, Player player) {
-		// TODO Auto-generated method stub
 		int map_x2 = robot.cur_pos.x;
 		int map_y2 = robot.cur_pos.y;
 		int map_x1 = player.cur_pos.x;
@@ -275,32 +194,9 @@ public class MiniRobot extends Agent {
 
 	private void attack(Player player) {
 		player.life--;
-		if(player.life < 0) {
+		if (player.life < 0) {
 			player.life = 0;
 		}
 	}
-
-	// private void attack(Player player) {
-	// player.life--;
-	//
-	// }
-	//
-	// protected Player getNextToPlayer() {
-	// for (Agent agent : Ecosystem.agents) {
-	// boolean up = (agent.cur_pos.x == this.cur_pos.x
-	// && this.moduloHeight(agent.cur_pos.y - 1) == this.cur_pos.y);
-	// boolean down = (agent.cur_pos.x == this.cur_pos.x
-	// && this.moduloHeight(agent.cur_pos.y + 1) == this.cur_pos.y);
-	// boolean right = (this.moduloWidth(agent.cur_pos.x + 1)== this.cur_pos.x
-	// && (agent.cur_pos.y ) == this.cur_pos.y);
-	// boolean left = (this.moduloWidth(agent.cur_pos.x - 1)== this.cur_pos.x
-	// && (agent.cur_pos.y ) == this.cur_pos.y);
-	// if(agent instanceof Player &&( up || down || right || left)) {
-	// return (Player)agent;
-	// }
-	//
-	// }
-	// return null;
-	// }
 
 }

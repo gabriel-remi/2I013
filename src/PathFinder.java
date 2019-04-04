@@ -19,7 +19,7 @@ public class PathFinder {
 		
 		for (int y = 0; y < map[0].length; y++) {
 			for (int x = 0; x < map.length; x++) {
-				if (Ecosystem.map.getMapEntities()[x][y] != MapEntitiesID.NOTHING || (Ecosystem.map.getMapTexture()[x][y] != MapTextureID.GROUND && Ecosystem.map.getMapTexture()[x][y] != MapTextureID.SPAWN)) {
+				if (Ecosystem.map.getMapEntities()[x][y] != MapEntitiesID.NOTHING || (Ecosystem.map.getMapTexture()[x][y] != MapTextureID.GROUND )) {
 					map[x][y] = OBSTACLE;
 				} else {
 					map[x][y] = ROAD;
@@ -54,6 +54,7 @@ public class PathFinder {
 			}
 
 			if (map[current.x][current.y] == GOAL) {
+				this.clear();
 				return backtrackPath(current);
 			}
 
@@ -64,7 +65,7 @@ public class PathFinder {
 				visited[current.x][current.y] = true;
 			}
 		}
-	
+	this.clear();
 		return new LinkedList<Position>();
 	}
 

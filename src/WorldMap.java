@@ -1,3 +1,6 @@
+import java.util.ArrayList;
+import java.util.Iterator;
+
 public class WorldMap {
 
 	private int highest_pX;
@@ -63,25 +66,12 @@ public class WorldMap {
 			}
 		}
 
-		int center_spawnX;
-		int center_spawnY;
-		do {
-			center_spawnX = (int) (Math.random() * mapHeight);
-			center_spawnY = (int) (Math.random() * mapWidth);
-		} while (mapTexture[center_spawnX][center_spawnY] != MapTextureID.GROUND || !surroundedByGround(center_spawnX, center_spawnY));
-		for (int i = -1; i < 2; i++) {
-			for (int j = -1; j < 2; j++) {
-				int curi = (center_spawnX + i + mapWidth)%mapWidth;
-				int curj = (center_spawnY + j + mapHeight)%mapHeight;
-				mapTexture[curi][curj] = MapTextureID.SPAWN;
-			}
-		}
-		Ecosystem.spawn_pos = new Position(center_spawnX, center_spawnY);
+		
 		initialisationVolcan();
 	}
 
+	@SuppressWarnings("unused")
 	private boolean surroundedByGround(int x, int y) {
-		// TODO Auto-generated method stub
 		return nb_of_ground_tiles_around(x,y) == 8;
 	}
 
@@ -196,7 +186,7 @@ public class WorldMap {
 
 		
 	public void ecoulement_lave() {	
-		// TODO Auto-generated method stub
+	
 		if(lave_coule) {
 			if((cpt_lave%4 == 0)) {
 				int rand = (int)(Math.random()*4);
@@ -281,7 +271,7 @@ public class WorldMap {
 			// can become a tree if lucky and if we are on the ground and if there is no one
 			// on the ground
 			updatedState = MapEntitiesID.NOTHING;
-			if (Ecosystem.season == Ecosystem.SPRING  && is_raining == false && Math.random() < Ecosystem.P_TREE_BIRTH && mapTexture[x][y] == MapTextureID.GROUND && nb_of_water_tiles_around(x,y) == 0) {
+			if (!agentAt(x,y) && Ecosystem.season == Ecosystem.SPRING  && is_raining == false && Math.random() < Ecosystem.P_TREE_BIRTH && mapTexture[x][y] == MapTextureID.GROUND && nb_of_water_tiles_around(x,y) == 0) {
 
 				updatedState = MapEntitiesID.BABY_GREEN_TREE;
 			}
@@ -306,6 +296,17 @@ public class WorldMap {
 			break;
 		}
 		return updatedState;
+	}
+
+	private boolean agentAt(int x, int y) {
+		for (Iterator iterator = Ecosystem.agents.iterator(); iterator.hasNext();) {
+			Agent agent = (Agent) iterator.next();
+			if(agent.cur_pos.equals(new Position(x, y))){
+				return true;
+			}
+			
+		}
+		return false;
 	}
 
 	private int updateAshes(int x, int y) {
@@ -393,7 +394,7 @@ public class WorldMap {
 	}
 
 	public void setTree(int i, int j) {
-		// TODO Auto-generated method stub
+		
 		if (mapTexture[i][j] == MapTextureID.GROUND)
 			mapEntities[i][j] = MapEntitiesID.GREEN_TREE;
 
@@ -599,6 +600,17 @@ public class WorldMap {
 	
 	//GETTERS ALTITUDE rewritten
 	
+	public ArrayList<Position> getAccessiblePositionMiniRobot(){
+		ArrayList<Position> array = new ArrayList<Position>();
+		for (int x = 0; x < Ecosystem.mapWidth; x++) {
+			for (int y = 0; y < Ecosystem.mapHeight; y++) {
+				if(this.mapEntities[x][y] == MapEntitiesID.NOTHING && this.mapTexture[x][y] == MapTextureID.GROUND) {
+					array.add(new Position(x, y));
+				}
+			}
+		}
+		return array;
+	}
 	public double getAltitude(int x, int y) {
 		return mapAltitude[x][y];
 	}
@@ -677,9 +689,7 @@ public class WorldMap {
 	}
 	
 	
-	
-	
-	
+
 	public void affichageBruitPerlin() {
 		for (int x = 0; x < mapWidth; x++) { 
 			for (int y = 0; y < mapHeight; y++)

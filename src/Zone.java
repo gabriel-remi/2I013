@@ -7,8 +7,8 @@ public class Zone extends Rectangle{
 	 */
 	private static final long serialVersionUID = 1L;
 
-	public static Zone healingZone = new Zone(Ecosystem.mapWidth / 2 , Ecosystem.mapWidth / 2, Ecosystem.mapWidth / 2 , Ecosystem.mapWidth / 2);
-	public static Zone securityZone = new Zone(Ecosystem.mapWidth / 3 , Ecosystem.mapWidth / 3, Ecosystem.mapWidth / 2 , Ecosystem.mapWidth / 2);
+	public static Zone healingZone = new Zone(0 , 0, Ecosystem.mapWidth / 4 , Ecosystem.mapWidth / 4);
+	public static Zone securityZone = new Zone(Player.revivingPosition.x - Ecosystem.mapWidth / 14, Player.revivingPosition.y - Ecosystem.mapWidth / 14, Ecosystem.mapWidth / 7 , Ecosystem.mapWidth / 7);
 
 	public int animationTime = 0;
 	public boolean increaseTime = true;
