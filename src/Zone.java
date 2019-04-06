@@ -1,4 +1,5 @@
 import java.awt.Rectangle;
+import java.util.ArrayList;
 
 public class Zone extends Rectangle{
 
@@ -17,6 +18,7 @@ public class Zone extends Rectangle{
 		// TODO Auto-generated constructor stub
 	}
 
+	
 	public void updateAnimationTime() {
 		// TODO Auto-generated method stub
 		if(this.animationTime > 130) {
@@ -33,6 +35,20 @@ public class Zone extends Rectangle{
 		}
 		
 		
+	}
+
+
+	public ArrayList<Position> getLegalPosition() {
+		ArrayList<Position> acces = new ArrayList<Position>();
+		for (int i = this.x; i < this.width; i++) {
+			for (int j = this.y; j < this.height; j++) {
+				if(Ecosystem.map.getMapEntities()[i][j] == MapEntitiesID.NOTHING && Ecosystem.map.getMapTexture()[i][j] == MapTextureID.GROUND) {
+					acces.add(new Position(i, j));
+				}
+			}
+		}
+		
+		return acces;
 	}
 	
 	

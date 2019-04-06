@@ -82,7 +82,6 @@ public class Ecosystem extends JPanel implements KeyListener {
 			Position playerPosition = legalPosition.remove((int) (legalPosition.size() * Math.random()));
 			Ecosystem.agents.add(new Player(playerPosition));
 		}
-		
 
 	}
 
@@ -198,7 +197,7 @@ public class Ecosystem extends JPanel implements KeyListener {
 		g2.setTransform(zoomAndPanListener.getCoordTransform());
 
 		g2.setFont(new Font("TimesRoman", Font.PLAIN, SPRITE_SIZE / 2));
-		
+
 		drawMap(g2);
 		drawPlayerRevivingZone(g2);
 		if (key_zone)
@@ -207,7 +206,7 @@ public class Ecosystem extends JPanel implements KeyListener {
 			drawDetectionArea(g2);
 		drawDayNight(g2);
 		Toolkit.getDefaultToolkit().sync();
-		if(this.key_agents) {
+		if (this.key_agents) {
 			drawAgents(g2);
 		}
 		if (key_path) {
@@ -216,48 +215,53 @@ public class Ecosystem extends JPanel implements KeyListener {
 		;
 		drawagentSkills(g2);
 		drawDamage(g2);
-		
+
 		Toolkit.getDefaultToolkit().sync();
 
 	}
 
 	private void drawDamage(Graphics2D g2) {
-		for(Agent agent: this.agents) {
-			if(agent instanceof Player && ((Player)agent).damageDealt != null) {
-				g2.setColor(new Color(255,0,120));
-				Player player = (Player)agent;
-				g2.setFont(new Font("TimesRoman", Font.BOLD, SPRITE_SIZE ));
-				g2.drawString("-"+Integer.toString(player.damageDealt), player.target.cur_pos.x * this.SPRITE_SIZE, (player.target.cur_pos.y - 1) * this.SPRITE_SIZE);
-				 
+		for (Agent agent : this.agents) {
+			if (agent instanceof Player && ((Player) agent).damageDealt != null) {
+				g2.setColor(new Color(255, 0, 120));
+				Player player = (Player) agent;
+				g2.setFont(new Font("TimesRoman", Font.BOLD, SPRITE_SIZE));
+				g2.drawString("-" + Integer.toString(player.damageDealt), player.target.cur_pos.x * this.SPRITE_SIZE,
+						(player.target.cur_pos.y - 1) * this.SPRITE_SIZE);
+
 			}
-			if(agent instanceof Player && ((Player)agent).miss) {
-				g2.setColor(new Color(255,0,120));
-				Player player = (Player)agent;
-				g2.setFont(new Font("TimesRoman", Font.BOLD, SPRITE_SIZE ));
-				g2.drawString("MISSSSS", player.target.cur_pos.x * this.SPRITE_SIZE, (player.target.cur_pos.y - 1) * this.SPRITE_SIZE);
+			if (agent instanceof Player && ((Player) agent).miss) {
+				g2.setColor(new Color(255, 0, 120));
+				Player player = (Player) agent;
+				g2.setFont(new Font("TimesRoman", Font.BOLD, SPRITE_SIZE));
+				g2.drawString("MISSSSS", player.target.cur_pos.x * this.SPRITE_SIZE,
+						(player.target.cur_pos.y - 1) * this.SPRITE_SIZE);
 			}
-			
+
 		}
-		
+
 	}
 
 	private void drawagentSkills(Graphics2D g2) {
-		for(Agent agent: this.agents) {
-			if(agent instanceof Robot && ((Robot)agent).laserBeam) {
-				g2.setColor(new Color(255,0,0, 180));
-				 g2.setStroke(new BasicStroke(this.SPRITE_SIZE));
-				 Robot robt = (Robot)agent;
-				 Player player = (Player) robt.laserTarget;
-		         g2.draw(new Line2D.Float(robt.cur_pos.x * this.SPRITE_SIZE,this.SPRITE_SIZE * robt.cur_pos.y, this.SPRITE_SIZE * player.cur_pos.x,this.SPRITE_SIZE *  player.cur_pos.y));
+		for (Agent agent : this.agents) {
+			if (agent instanceof Robot && ((Robot) agent).laserBeam) {
+				g2.setColor(new Color(255, 0, 0, 180));
+				g2.setStroke(new BasicStroke(this.SPRITE_SIZE));
+				Robot robt = (Robot) agent;
+				Player player = (Player) robt.laserTarget;
+				g2.draw(new Line2D.Float(robt.cur_pos.x * this.SPRITE_SIZE, this.SPRITE_SIZE * robt.cur_pos.y,
+						this.SPRITE_SIZE * player.cur_pos.x, this.SPRITE_SIZE * player.cur_pos.y));
 			}
-			
+
 		}
-		
+
 	}
 
 	private void drawPlayerRevivingZone(Graphics2D g2) {
-		g2.drawImage(SpriteLoader.loader.spawn[0], Player.revivingPosition.x * this.SPRITE_SIZE - this.SPRITE_SIZE / 2, Player.revivingPosition.y * this.SPRITE_SIZE - this.SPRITE_SIZE / 2, this.SPRITE_SIZE * 2, this.SPRITE_SIZE * 2, this);
-		
+		g2.drawImage(SpriteLoader.loader.spawn[0], Player.revivingPosition.x * this.SPRITE_SIZE - this.SPRITE_SIZE / 2,
+				Player.revivingPosition.y * this.SPRITE_SIZE - this.SPRITE_SIZE / 2, this.SPRITE_SIZE * 2,
+				this.SPRITE_SIZE * 2, this);
+
 	}
 
 	private void drawDayNight(Graphics2D g2) {
@@ -1039,6 +1043,17 @@ public class Ecosystem extends JPanel implements KeyListener {
 				if (a instanceof Player) {
 					drawPlayer(g2, (Player) a, a.pos_direction.x, a.pos_direction.y);
 				}
+				if (a instanceof Healer) {
+			
+					g2.setColor(Color.BLUE);
+					g2.fillRect(a.cur_pos.x * this.SPRITE_SIZE , this.SPRITE_SIZE * a.cur_pos.y, this.SPRITE_SIZE, this.SPRITE_SIZE);
+			
+				}
+				if (a instanceof Mage) {
+					
+					g2.setColor(Color.RED);
+					g2.fillRect( this.SPRITE_SIZE * a.cur_pos.x,this.SPRITE_SIZE *  a.cur_pos.y, this.SPRITE_SIZE, this.SPRITE_SIZE);
+				}
 				if (a instanceof Robot) {
 					drawRobot(g2, (Robot) a, Ecosystem.SPRITE_SIZE * 10);
 				}
@@ -1155,6 +1170,12 @@ public class Ecosystem extends JPanel implements KeyListener {
 			}
 			if (a instanceof Robot) {
 				((Robot) a).update();
+			}
+			if (a instanceof Mage) {
+				((Mage) a).update();
+			}
+			if (a instanceof Healer) {
+				((Healer) a).update();
 			}
 
 		}

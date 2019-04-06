@@ -9,11 +9,10 @@ public class Player extends Agent {
 	public Integer damageDealt = null;
 	public boolean miss = false;
 	public Agent target = null;
+	private int earnedPoint = 501;
 
 	public Player(int x, int y) {
-
 		super(x, y, 100, "Gabriel");
-
 	}
 
 	public Player(Position playerPosition) {
@@ -27,132 +26,148 @@ public class Player extends Agent {
 		this.damageDealt = null;
 		this.target = null;
 		this.miss = false;
-		if (isDead()) {
 
+		if (isDead()) {
 			if (canRevive()) {
-				System.out.println("Player is resurecting");
 				this.resurection();
 			} else {
-				System.out.println("player is dead and waiting to revive");
 				increaseIsDeadTime();
 			}
 		} else {
+
 			if (canDie()) {
-
 				this.die();
-				System.out.println("player died due to water or lava");
 			} else {
-
+				if(earnedPoint > 600 && numberHealer() < 1) {
+					Ecosystem.tmp.add(new Healer(this.cur_pos.x, this.cur_pos.y, 999999, "Healer", this));
+					this.earnedPoint =0;
+				}
+				if(earnedPoint > 500 && numberMage() < 1) {
+					Ecosystem.tmp.add(new Mage(this.cur_pos.x, this.cur_pos.y, 999999, "Mage", this));
+					this.earnedPoint = 0;
+				}
 				if (this.in(Zone.healingZone) && this.life < this.max_life) {
-					if (this.detectMiniRobotAlive()) {
-						// MiniRobot mini_robot = this.getDetectedMiniRobot();
+					regenLife();
 						MiniRobot mini_robot = this.closestMiniRobot();
-						if (this.nextTo(mini_robot) && this.healthierThan(mini_robot)) {
+						this.attack(mini_robot);
+						System.out.println(mini_robot);
+						if (this.nextTo(mini_robot)) {
 							this.stayAtCurrentPosition();
 							this.face(mini_robot);
-							this.attack(mini_robot);
-
-							System.out.println("Player attacked a minirobot");
+							
+							System.out.println("attacking while zone");
 							if (mini_robot.life <= 0) {
+								earnPoint();
 								this.level++;
-								System.out.println("Player killed a minirobot and his leveled up");
 							}
 						}
 
-					}
+					
 				}
+				 else {
+					 if (this.life < this.max_life / 3) {
+							if (existPathTo(Zone.healingZone)) {
+								this.walkTo(Zone.healingZone);
 
-				if (this.detectMiniRobotAlive()) {
-					// MiniRobot mini_robot = this.getDetectedMiniRobot();
-					MiniRobot mini_robot = this.closestMiniRobot();
-					if (this.nextTo(mini_robot) && this.healthierThan(mini_robot)) {
-						this.stayAtCurrentPosition();
-						this.face(mini_robot);
-						this.attack(mini_robot);
-
-						System.out.println("Player attacked a minirobot");
-						if (mini_robot.life <= 0) {
-							this.level++;
-							System.out.println("Player killed a minirobot and his leveled up");
-						}
-					} else {
-						if (this.healthierThan(mini_robot)) {
-							if (this.strongerThan(mini_robot)) {
-								this.path = PathFinder.pathfinder.getPath(this.cur_pos, mini_robot.cur_pos);
-								PathFinder.pathfinder.clear();
-								if (existPathTo(mini_robot)) {
-									this.walkTo(mini_robot);
-									System.out.println("player is walking toward a robot " + this.path);
-								} else {
-									if (random_pos == null || this.cur_pos.equals(this.random_pos) || this.path == null
-											|| this.path.size() == 0 || timeSearch < 0) {
-										random_pos = new Position();
-										timeSearch = 30;
-									}
-									if (existPathTo(random_pos)) {
-										timeSearch--;
-										this.walkTo(random_pos);
-
-									} else {
-
-										this.walkRandomly();
-
-									}
-									System.out.println("player is walking randomly");
-								}
 							} else {
-								// !!!!!!
 								if (existPathTo(Zone.securityZone)) {
 									this.walkTo(Zone.securityZone);
-									System.out.println("Player is going to the security zone");
 
 								} else {
-									if (existPathTo(Zone.healingZone)) {
-										this.walkTo(Zone.healingZone);
-										System.out.println("Player is going to the healing zone");
-									} else {
-										this.walkRandomly();
-										System.out.println(7);
-									}
-								}
-
-							}
-						} else {
-							// !!!!!
-							if (existPathTo(Zone.securityZone)) {
-								this.walkTo(Zone.securityZone);
-								System.out.println("Player is going to the security zone");
-							} else {
-								if (existPathTo(Zone.healingZone)) {
-									this.walkTo(Zone.healingZone);
-									System.out.println("Player is going to the healing zone");
-								} else {
-
-									if (existPathTo(mini_robot)) {
-										this.walkTo(mini_robot);
-										System.out.println("player is walking toward a robot " + this.path);
-									} else {
-										doNothing();
-										System.out.println("player do nothing");
-									}
+									this.walkRandomly();
 								}
 							}
 						}
-					}
+				 else {
 
-				} else {
-					if (this.detectItem()) {
-						// A FAIRE
-						Position item = this.getDetectedItem();
-						this.path = PathFinder.pathfinder.getPath(this.cur_pos, item);
-						PathFinder.pathfinder.clear();
-						if (existPathTo(item)) {
-							this.walkTo(item);
-							System.out.println("player is walking toward an item");
+						if (this.detectMiniRobotAlive()) {
+							MiniRobot mini_robot = this.closestMiniRobot();
+							if (this.nextTo(mini_robot) && this.healthierThan(mini_robot)) {
+								this.stayAtCurrentPosition();
+								this.face(mini_robot);
+								this.attack(mini_robot);
+
+								if (mini_robot.life <= 0) {
+									this.earnPoint();
+									this.level++;
+								}
+							} else {
+
+								if (this.healthierThan(mini_robot)) {
+
+									if (this.strongerThan(mini_robot)) {
+										this.path = this.getPath(this.cur_pos, mini_robot.cur_pos);
+										this.clear();
+										if (existPathTo(mini_robot)) {
+											this.walkTo(mini_robot);
+										} else {
+											if (random_pos == null || this.cur_pos.equals(this.random_pos)
+													|| this.path == null || this.path.size() == 0 || timeSearch < 0) {
+												ArrayList<Position> acces = Ecosystem.map
+														.getAccessiblePositionMiniRobot();
+												if (acces.isEmpty()) {
+													this.walkRandomly();
+												} else {
+													this.random_pos = acces.get((int) (acces.size() * Math.random()));
+												}
+												timeSearch = 30;
+											}
+											if (existPathTo(random_pos)) {
+												timeSearch--;
+												this.walkTo(random_pos);
+
+											} else {
+
+												this.walkRandomly();
+
+											}
+										}
+									} else {
+
+										// !!!!!!
+										if (existPathTo(Zone.securityZone)) {
+											this.walkTo(Zone.securityZone);
+
+										} else {
+											if (existPathTo(Zone.healingZone)) {
+												this.walkTo(Zone.healingZone);
+											} else {
+												this.walkRandomly();
+											}
+										}
+
+									}
+								} else {
+									// !!!!!
+									if (existPathTo(Zone.healingZone)) {
+										this.walkTo(Zone.healingZone);
+
+									} else {
+										if (existPathTo(Zone.securityZone)) {
+											this.walkTo(Zone.securityZone);
+
+										} else {
+
+											if (existPathTo(mini_robot)) {
+												this.walkTo(mini_robot);
+											} else {
+												this.walkRandomly();
+											}
+										}
+									}
+								}
+							}
+
 						} else {
+
 							if (random_pos == null || this.cur_pos.equals(this.random_pos) || this.path == null
 									|| this.path.size() == 0 || timeSearch < 0) {
-								random_pos = new Position();
+								ArrayList<Position> acces = Ecosystem.map.getAccessiblePositionMiniRobot();
+								if (acces.isEmpty()) {
+									this.walkRandomly();
+								} else {
+									this.random_pos = acces.get((int) (acces.size() * Math.random()));
+								}
 								timeSearch = 30;
 							}
 							if (existPathTo(random_pos)) {
@@ -164,29 +179,44 @@ public class Player extends Agent {
 								this.walkRandomly();
 
 							}
-							System.out.println("player is walking randomly");
-						}
-					} else {
-						if (random_pos == null || this.cur_pos.equals(this.random_pos) || this.path == null
-								|| this.path.size() == 0 || timeSearch < 0) {
-							random_pos = new Position();
-							timeSearch = 30;
-						}
-						if (existPathTo(random_pos)) {
-							timeSearch--;
-							this.walkTo(random_pos);
-
-						} else {
-
-							this.walkRandomly();
 
 						}
-						System.out.println("player is walking randomly");
 					}
 
 				}
+
 			}
 		}
+	}
+
+	private void earnPoint() {
+		this.earnedPoint++;
+		
+	}
+
+	private int numberMage() {
+		int cpt =0;
+		for(Agent agent: Ecosystem.agents) {
+			if (agent instanceof Mage) {
+				cpt++;
+			}
+		}
+		return cpt;
+	}
+
+	private int numberHealer() {
+		int cpt =0;
+		for(Agent agent: Ecosystem.agents) {
+			if (agent instanceof Healer) {
+				cpt++;
+			}
+		}
+		return cpt;
+	}
+
+	private void regenLife() {
+		this.life++;
+		
 	}
 
 	private void face(MiniRobot mini_robot) {
@@ -203,8 +233,8 @@ public class Player extends Agent {
 
 	private boolean nextTo(MiniRobot mini_robot) {
 
-		return this.cur_pos.isAbove(mini_robot.cur_pos) || this.cur_pos.isDown(mini_robot.cur_pos)
-				|| this.cur_pos.isAtTheLeftOf(mini_robot.cur_pos) || this.cur_pos.isAtTheRightOf(mini_robot.cur_pos);
+		return mini_robot.cur_pos.isAbove(this.cur_pos) || mini_robot.cur_pos.isDown(this.cur_pos)
+				|| mini_robot.cur_pos.isAtTheLeftOf(this.cur_pos) || mini_robot.cur_pos.isAtTheRightOf(this.cur_pos);
 	}
 
 	private void walkTo(Position item) {
@@ -217,19 +247,8 @@ public class Player extends Agent {
 
 	private boolean existPathTo(Position item) {
 
-		this.path = PathFinder.pathfinder.getPath(this.cur_pos, item);
-		PathFinder.pathfinder.clear();
+		this.path = getPath(this.cur_pos, item);
 		return this.path != null && this.path.size() > 0;
-	}
-
-	private Position getDetectedItem() {
-
-		return new Position(0, 0);
-	}
-
-	private boolean detectItem() {
-
-		return false;
 	}
 
 	private void walkTo(Zone zone) {
@@ -243,12 +262,15 @@ public class Player extends Agent {
 
 	private boolean existPathTo(Zone zone) {
 
-		Random rand = new Random();
+		ArrayList<Position> acces = zone.getLegalPosition();
+	
+		if(acces.isEmpty()) {
+			return false;
+		}
+		else {
+			this.path = getPath(this.cur_pos, acces.get((int) (acces.size()*Math.random())));
+		}
 
-		int randomx = rand.nextInt(zone.width) + zone.width;
-		int randomy = rand.nextInt(zone.height) + zone.height;
-		this.path = PathFinder.pathfinder.getPath(this.cur_pos, new Position(randomx, randomy));
-		PathFinder.pathfinder.clear();
 		return this.path != null && this.path.size() > 0;
 	}
 
@@ -311,8 +333,7 @@ public class Player extends Agent {
 
 	private boolean canDie() {
 
-		return Ecosystem.map.getMapTexture()[this.cur_pos.x][this.cur_pos.y] == MapTextureID.LAVA
-				|| Ecosystem.map.getMapTexture()[this.cur_pos.x][this.cur_pos.y] == MapTextureID.WATER;
+		return Ecosystem.map.getMapTexture()[this.cur_pos.x][this.cur_pos.y] == MapTextureID.LAVA;
 	}
 
 	private void increaseIsDeadTime() {
@@ -365,10 +386,7 @@ public class Player extends Agent {
 
 	}
 
-	public int distance(int map_x1, int map_y1, int map_x2, int map_y2) {
 
-		return (int) Math.sqrt((map_y2 - map_y1) * (map_y2 - map_y1) + (map_x2 - map_x1) * (map_x2 - map_x1));
-	}
 
 	private void attack(MiniRobot MiniRobot) {
 		if (this.precision > Math.random()) {

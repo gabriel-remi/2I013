@@ -37,7 +37,7 @@ public class MiniRobot extends Agent {
 
 					} else {
 
-						this.path = PathFinder.pathfinder.getPath(this.cur_pos, player.cur_pos);
+						this.path = getPath(this.cur_pos, player.cur_pos);
 						
 						if (existPathTo(player.cur_pos)) {
 							// System.out.println("MiniRobot is walking towards a player");
@@ -124,7 +124,7 @@ public class MiniRobot extends Agent {
 	}
 
 	private boolean existPathTo(Position item) {
-		this.path = PathFinder.pathfinder.getPath(this.cur_pos, item);
+		this.path =getPath(this.cur_pos, item);
 		
 		return this.path.size() > 0;
 	}
