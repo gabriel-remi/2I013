@@ -791,7 +791,7 @@ public class WorldMap {
 		for (int x = 0; x < mapWidth; x++) { 
 			for (int y = 0; y < mapHeight; y++)
 			  System.out.print(String.format("%.2f ", mapAltitude[x][y]));
-			System.out.println();
+			
 		}
 	}
 }

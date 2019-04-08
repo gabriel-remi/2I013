@@ -6,7 +6,7 @@ public class Life {
 		int it = 0, nb_pas_max = 200000;		
 		
 		while(it < nb_pas_max) {
-			//System.out.println(it);
+			//
 			try {
 				Thread.sleep(delai);
 			} catch (InterruptedException exception) 

@@ -25,7 +25,7 @@ public class Robot extends Agent {
 			laserBeam = !laserBeam;
 			this.laserTarget = null;
 		}
-		// System.out.println(this);
+		// 
 		if (this.detectPlayer()) {
 			Player target = this.getDetectedPlayer();
 			this.stayAtCurrentPosition();
@@ -33,8 +33,8 @@ public class Robot extends Agent {
 			this.laserBeam = true;
 			this.laserTarget = target;
 		} else {
-			System.out.println(this.getMiniRobotNumber());
-			System.out.println(this.productionTimer);
+			
+			
 			if (getMiniRobotNumber() < this.NB_MAX) {
 				if (this.productionTimer <= 0) {
 					Ecosystem.tmp.add(new MiniRobot(this.cur_pos.x, (this.cur_pos.y + 1) % Ecosystem.mapHeight));

@@ -36,7 +36,7 @@ public class Ecosystem extends JPanel implements KeyListener {
 	public static final int mapHeight = P_HEIGHT / SPRITE_SIZE;
 
 	// interactions with the keyboard
-	boolean key_zone, key_aggro, key_season, key_lava, key_rain, key_path, key_agents;
+	boolean key_zone, key_aggro, key_season, key_lava, key_rain, key_path, key_agents, key_smooth;
 
 	public int duree_pluie = 0;
 	public static int darkness = 0;
@@ -65,18 +65,6 @@ initElementaires();
 	}
 	private void initElementaires() {
 		Ecosystem.elements = new ArrayList<Elementaire>();
-		Ecosystem.elements.add(new Elementaire(1, new Position(0, 0)));
-		Ecosystem.elements.add(new Elementaire(1, new Position(0, 0)));
-		Ecosystem.elements.add(new Elementaire(1, new Position(0, 0)));
-		Ecosystem.elements.add(new Elementaire(1, new Position(0, 0)));
-
-		Ecosystem.elements.add(new Elementaire(2, new Position(0, 0)));
-		Ecosystem.elements.add(new Elementaire(2, new Position(0, 0)));
-		Ecosystem.elements.add(new Elementaire(2, new Position(0, 0)));
-
-		Ecosystem.elements.add(new Elementaire(3, new Position(0, 0)));
-		Ecosystem.elements.add(new Elementaire(3, new Position(0, 0)));
-		Ecosystem.elements.add(new Elementaire(3, new Position(0, 0)));
 
 	}
 	private void initAgents() {
@@ -769,13 +757,18 @@ private void draw_winter_ground(Graphics g2, int x, int y) {
 					drawRobotPortal(g2, (Robot) a, Ecosystem.SPRITE_SIZE * 4);
 				}
 
-				if (a instanceof MiniRobot)
+				if (!(a instanceof Robot))
 					drawName(g2, a);
 
-				if (a instanceof MiniRobot) 
+				if (!(a instanceof Robot)) 
 					drawHealthBar(g2, a);
 			}
+			if(key_smooth){
+			
+			a.updateOffset();
+			}
 		}
+		
 
 	}
 
@@ -956,6 +949,8 @@ private void draw_winter_ground(Graphics g2, int x, int y) {
 			season = (int)(Math.random()*4);
 			initAgents();
 		}
+		else if(e.getKeyCode()==KeyEvent.VK_T)
+			key_smooth = !key_smooth;
 		else if(e.getKeyCode() == KeyEvent.VK_C)
 			System.exit(1);
 	}

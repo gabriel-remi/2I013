@@ -1,7 +1,24 @@
 
-Commande pour compiler les fichiers
+Se positionner dans le répertoire contenant le dossier src
+
+Commande pour compiler les fichiers :
 javac src/*.java
-Commande pour lancer le programme
+Commande pour lancer le programme :
 cd src
 java Life
+
+TOUCHES :
+
+ P : fait pleuvoir dans le monde
+ S : Change la saison
+ L : eruption du volcan, ecoulement de la lave
+ Z : Affichage/Desaffichage  des zones de soin et de sécurité du joueur
+ A : Affichage/Desaffichage  des zones de détection des agents
+ E : Affichage/Desaffichage du chemin pris par les agents
+ R : Affichage/Desaffichage  des agents
+ N : Creation d'un nouveau monde
+ C : Sortie du programme
+ T : Affichage de mouvements fluides
+ -> : La flèche droite du clavier numérique permet de déccelerer
+ <- :  La flèche gauche du clavier numérique permet d'accelerer
 
