@@ -1,0 +1,7 @@
+
+Commande pour compiler les fichiers
+javac src/*.java
+Commande pour lancer le programme
+cd src
+java Life
+
