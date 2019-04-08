@@ -17,9 +17,8 @@ public class WorldMap {
 	
 	public int cpt_lave, duree_lave;
 	public int cpt_pluie, cpt_evaporation;
-	public double hauteur_pluie;
+	public double hauteur_pluie, hauteur_neige = 0, nb_of_snow = 0;
 	public boolean is_raining, lave_coule;
-	public static final double P_RAIN = 0.05, P_LAVE = 0.05;
 	public static final int LAVE_DROITE = 0, LAVE_BAS = 1, LAVE_GAUCHE = 2, LAVE_HAUT = 3;
 	
 
@@ -78,7 +77,7 @@ public class WorldMap {
 	public void initMapEntities() {
 		for (int x = 0; x < mapEntities.length; x++) {
 			for (int y = 0; y < mapEntities[0].length; y++) {
-				if (Math.random() < 0.3 && mapTexture[x][y] == MapTextureID.GROUND && nb_of_water_tiles_around(x,y) == 0)
+				if (Math.random() < Ecosystem.P_TREE_INIT && mapTexture[x][y] == MapTextureID.GROUND && nb_of_water_tiles_around(x,y) == 0)
 						this.mapEntities[x][y] = MapEntitiesID.GREEN_TREE;
 				else
 					this.mapEntities[x][y] = MapEntitiesID.NOTHING;
@@ -123,13 +122,24 @@ public class WorldMap {
 	public void update() {
 		
 		for(int x = 0; x < mapTexture.length; x++) {
-			for(int y = 0; y < mapTexture[x].length; y++) 
+			for(int y = 0; y < mapTexture[x].length; y++) {
 				nextMapTexture[x][y] = mapTexture[x][y];
+				if(nextMapTexture[x][y] == MapTextureID.WATER || nextMapTexture[x][y] == MapTextureID.ICE) {
+					if(Ecosystem.season == Ecosystem.WINTER)
+						frost(x,y);
+					else {
+						defrost(x,y);
+					}
+				}
+				if(Ecosystem.season != Ecosystem.WINTER)
+					remove_snow(x,y);
+			}
+			
 		}
-				
+			
 		if(is_raining) {
 			pluie();
-			cpt_pluie++;
+			snow();
 		}else {
 			evaporation();
 			if(cpt_pluie == 0)
@@ -141,12 +151,19 @@ public class WorldMap {
 		if(lave_coule) 
 			ecoulement_lave();
 
+		
+		for(int x = 0; x < mapTexture.length; x++) {
+			for(int y= 0; y < mapTexture[x].length; y++) {
+				mapTexture[x][y] = nextMapTexture[x][y];
+			}
+		}
 		for(int x = 0; x < mapTexture.length; x++) {
 			for(int y = 0; y < mapTexture[0].length; y++) {
-				mapTexture[x][y] = nextMapTexture[x][y];
 				if(lave_coule == false) {
 					if(nextMapTexture[x][y] == MapTextureID.LAVA)
-						mapTexture[x][y] = MapTextureID.COLD_LAVA;
+						mapTexture[x][y] = cooling_lava(x,y);
+					if(nextMapTexture[x][y] == MapTextureID.COLD_LAVA)
+						mapTexture[x][y] = cleaning_cold_lava(x,y);
 				}
 			}
 		}
@@ -154,7 +171,7 @@ public class WorldMap {
 		updateMapEntities();
 	}
 
-	
+
 	public void pluie() {
 		cpt_evaporation = 0;
 		if(Ecosystem.season != Ecosystem.WINTER) {	//%100 == 30
@@ -167,15 +184,35 @@ public class WorldMap {
 			}
 			hauteur_pluie += 0.1;
 		}
+		cpt_pluie++;
+	}
+	
+	
+	public void snow() {
+		cpt_evaporation = 0;
+		if(Ecosystem.season == Ecosystem.WINTER) {
+			for(int i = 0; i < mapAltitude.length; i++) {
+				for(int j = 0; j < mapAltitude[i].length; j++) {
+					if(is_near_cratere(i,j) == false && mapTexture[i][j] != MapTextureID.LAVA && mapTexture[i][j] != MapTextureID.SNOW 
+							&& mapTexture[i][j] != MapTextureID.CRATERE && mapAltitude[i][j] > ( mapAltitude[highest_pX][highest_pY] - hauteur_neige) && mapAltitude[i][j] > -5) {
+						nextMapTexture[i][j] = MapTextureID.SNOW;
+						nb_of_snow++;
+					}
+				}
+			}
+			hauteur_neige += 0.5;
+		}
 	}
 	
 	
 	public void evaporation() {
+		if(nb_of_snow <= 0) {
+			hauteur_neige = 0;
+		}
 		for(int i = 0; i < mapAltitude.length; i++) {
 			for(int j = 0; j < mapAltitude[i].length; j++) {
-				if(mapTexture[i][j] == MapTextureID.WATER && mapAltitude[i][j] > (hauteur_pluie - 15)) {
+				if(mapTexture[i][j] == MapTextureID.WATER && mapAltitude[i][j] > (hauteur_pluie - 15)) 
 					nextMapTexture[i][j] = getTexture(i,j);
-				}
 			}
 		}
 		if(hauteur_pluie == 0)
@@ -183,7 +220,45 @@ public class WorldMap {
 		else
 			hauteur_pluie-= 0.05;
 	}
+	
+	
+	
+	public void frost(int x, int y) {
+		if(Math.random()<0.6 && (nb_of_ground_tiles_around(x,y) != 0 || nb_of_ice_tiles_around(x,y) != 0))
+			nextMapTexture[x][y] = MapTextureID.ICE;
+	}
+	
+	public void defrost(int x, int y) {
+		if(mapTexture[x][y] == MapTextureID.ICE && Math.random()<0.6 && (nb_of_ground_tiles_around(x,y) != 0 || nb_of_water_tiles_around(x,y) != 0))
+			nextMapTexture[x][y] = MapTextureID.WATER;
+	}
+	
+	public void remove_snow(int x, int y) {
+		if(mapTexture[x][y] == MapTextureID.SNOW) {
+			if( Ecosystem.season == Ecosystem.SUMMER || (Math.random() < 0.3 && Ecosystem.season != Ecosystem.WINTER && Ecosystem.season != Ecosystem.SUMMER)) {
+				nextMapTexture[x][y] = getTexture(x,y);
+				nb_of_snow--;
+				if(Ecosystem.season == Ecosystem.SUMMER)
+					hauteur_neige = 0;
+			}
+		}
+	}
+	
+	
 
+	public int cooling_lava(int x, int y) {
+		if(Math.random()<0.6 && (nb_of_ground_tiles_around(x,y) != 0 || nb_of_water_tiles_around(x,y) != 0 || nb_of_mountain_tiles_around(x,y) != 0 || nb_of_cold_lava_tiles_around(x,y) != 0))
+			return MapTextureID.COLD_LAVA;
+		else return MapTextureID.LAVA;
+	}
+	
+	public int cleaning_cold_lava(int x, int y) {
+		if(lave_coule == false && cpt_pluie > 100 && Math.random()<0.2)
+			return getTexture(x,y);
+		else return MapTextureID.COLD_LAVA;
+	}
+	
+	
 		
 	public void ecoulement_lave() {	
 	
@@ -298,7 +373,6 @@ public class WorldMap {
 		return updatedState;
 	}
 
-
 	private boolean agentAt(int x, int y) {
 		for (Iterator iterator = Ecosystem.agents.iterator(); iterator.hasNext();) {
 			Agent agent = (Agent) iterator.next();
@@ -323,7 +397,7 @@ public class WorldMap {
 	
 	public int updateTree(int x, int y) {
 		int up = (x-1 + mapHeight)%mapHeight;
-		int down = (x-1 + mapHeight)%mapHeight;
+		int down = (x+1 + mapHeight)%mapHeight;
 		int left = (y-1 + mapWidth)%mapWidth;
 		int right = (y+1 + mapWidth)%mapWidth;
 		
@@ -347,7 +421,7 @@ public class WorldMap {
 	public void randomWildFire() {
 		int randX = (int) (Math.random() * mapEntities.length);
 		int randY = (int) (Math.random() * mapEntities[0].length);
-		if (mapEntities[randX][randY] == MapEntitiesID.GREEN_TREE)
+		if (mapEntities[randX][randY] == MapEntitiesID.GREEN_TREE && is_raining == false && Math.random() < Ecosystem.P_SET_ON_FIRE)
 			nextMapEntities[randX][randY] = MapEntitiesID.BURNING_TREE;
 	}
 
@@ -443,123 +517,96 @@ public class WorldMap {
 		return nb_of_ground_tiles;
 	}
 	
-	
-	
-	
-	//CORNER DE TYPE A
-
-	public boolean is_corner_A(int x, int y) {
-		int water_around = nb_of_water_tiles_around(x, y);
-		if (water_around >= 3) {
-			if (water_around == 3) {
-				// gauche
-				if (getTextureLeft(x, y) == MapTextureID.WATER && getTextureUpLeft(x, y) == MapTextureID.WATER && getTextureDownLeft(x, y) == MapTextureID.WATER)
-					return false;
-				// droit
-				else if (getTextureRight(x, y) == MapTextureID.WATER && getTextureUpRight(x, y) == MapTextureID.WATER && getTextureDownRight(x, y) == MapTextureID.WATER)
-					return false;
-				// dessous
-				else if (getTextureDown(x, y) == MapTextureID.WATER && getTextureDownRight(x, y) == MapTextureID.WATER && getTextureDownLeft(x, y) == MapTextureID.WATER)
-					return false;
-				// dessus
-				else if (getTextureUp(x, y) == MapTextureID.WATER && getTextureUpLeft(x, y) == MapTextureID.WATER && getTextureUpRight(x, y) == MapTextureID.WATER)
-					return false;
-				else
-					return true;
-			} else {
-				if (getTextureUp(x, y) == MapTextureID.GROUND && getTextureRight(x, y) == MapTextureID.GROUND)
-					return true;
-				else if (getTextureUp(x, y) == MapTextureID.GROUND && getTextureLeft(x, y) == MapTextureID.GROUND)
-					return true;
-				else if (getTextureDown(x, y) == MapTextureID.GROUND && getTextureLeft(x, y) == MapTextureID.GROUND)
-					return true;
-				else if (getTextureDown(x, y) == MapTextureID.GROUND && getTextureRight(x, y) == MapTextureID.GROUND)
-					return true;
-			}
-		}
-		return false; // ce n'est pas un corner typeA
-
-	}
-
-	public boolean is_corner_A_mountain(int x, int y) {
-		int ground_around = nb_of_ground_tiles_around(x, y);
-		if (ground_around >= 3) {
-			if (ground_around == 3) {
-				//gauche
-				if (getTextureLeft(x, y) == MapTextureID.GROUND && getTextureUpLeft(x, y) == MapTextureID.GROUND
-						&& getTextureDownLeft(x, y) == MapTextureID.GROUND)
-					return false;
-				// droit
-				else if (getTextureRight(x, y) == MapTextureID.GROUND && getTextureUpRight(x, y) == MapTextureID.GROUND
-						&& getTextureDownRight(x, y) == MapTextureID.GROUND)
-					return false;
-				// dessous
-				else if (getTextureDown(x, y) == MapTextureID.GROUND && getTextureDownRight(x, y) == MapTextureID.GROUND
-						&& getTextureDownLeft(x, y) == MapTextureID.GROUND)
-					return false;
-				// dessus
-				else if (getTextureUp(x, y) == MapTextureID.GROUND && getTextureUpLeft(x, y) == MapTextureID.GROUND
-						&& getTextureUpRight(x, y) == MapTextureID.GROUND)
-					return false;
-				else
-					return true;
-			} else {
-				if (getTextureUp(x, y) == MapTextureID.MOUNTAIN && getTextureRight(x, y) == MapTextureID.MOUNTAIN)
-					return true;
-				else if (getTextureUp(x, y) == MapTextureID.MOUNTAIN && getTextureLeft(x, y) == MapTextureID.MOUNTAIN)
-					return true;
-				else if (getTextureDown(x, y) == MapTextureID.MOUNTAIN && getTextureLeft(x, y) == MapTextureID.MOUNTAIN)
-					return true;
-				else if (getTextureDown(x, y) == MapTextureID.MOUNTAIN
-						&& getTextureRight(x, y) == MapTextureID.MOUNTAIN)
-					return true;
-			}
-		}
-		return false; // ce n'est pas un corner typeA
-
+	public int nb_of_ice_tiles_around(int x, int y) {
+		int nb_of_ice_tiles = 0;
+		if (getTextureLeft(x, y) == MapTextureID.ICE)
+			nb_of_ice_tiles++;
+		if (getTextureRight(x, y) == MapTextureID.ICE)
+			nb_of_ice_tiles++;
+		if (getTextureUpLeft(x, y) == MapTextureID.ICE)
+			nb_of_ice_tiles++;
+		if (getTextureUpRight(x, y) == MapTextureID.ICE)
+			nb_of_ice_tiles++;
+		if (getTextureDownLeft(x, y) == MapTextureID.ICE)
+			nb_of_ice_tiles++;
+		if (getTextureDownRight(x, y) == MapTextureID.ICE)
+			nb_of_ice_tiles++;
+		if (getTextureUp(x, y) == MapTextureID.ICE)
+			nb_of_ice_tiles++;
+		if (getTextureDown(x, y) == MapTextureID.ICE)
+			nb_of_ice_tiles++;
+		return nb_of_ice_tiles;
 	}
 	
-	public int select_corner_typeA(int x, int y) {
-		if (getTextureUp(x, y) == MapTextureID.GROUND && getTextureRight(x, y) == MapTextureID.GROUND)
-			return 0;
-		else if (getTextureUp(x, y) == MapTextureID.GROUND && getTextureLeft(x, y) == MapTextureID.GROUND)
-			return 1;
-		else if (getTextureDown(x, y) == MapTextureID.GROUND && getTextureLeft(x, y) == MapTextureID.GROUND)
-			return 2;
-		else if (getTextureDown(x, y) == MapTextureID.GROUND && getTextureRight(x, y) == MapTextureID.GROUND)
-			return 3;
-		return 4;
+	public int nb_of_mountain_tiles_around(int x, int y) {
+		int nb_of_mountain_tiles = 0;
+		if (getTextureLeft(x, y) == MapTextureID.MOUNTAIN)
+			nb_of_mountain_tiles++;
+		if (getTextureRight(x, y) == MapTextureID.MOUNTAIN)
+			nb_of_mountain_tiles++;
+		if (getTextureUpLeft(x, y) == MapTextureID.MOUNTAIN)
+			nb_of_mountain_tiles++;
+		if (getTextureUpRight(x, y) == MapTextureID.MOUNTAIN)
+			nb_of_mountain_tiles++;
+		if (getTextureDownLeft(x, y) == MapTextureID.MOUNTAIN)
+			nb_of_mountain_tiles++;
+		if (getTextureDownRight(x, y) == MapTextureID.MOUNTAIN)
+			nb_of_mountain_tiles++;
+		if (getTextureUp(x, y) == MapTextureID.MOUNTAIN)
+			nb_of_mountain_tiles++;
+		if (getTextureDown(x, y) == MapTextureID.MOUNTAIN)
+			nb_of_mountain_tiles++;
+		return nb_of_mountain_tiles;
 	}
-
 	
-	
-	
-	
-	
-	//CORNER DE TYPE B
-	public boolean is_corner_B(int x, int y) {
-		// Si il a une case d'eau voisine(dans un coin)
-		return (nb_of_water_tiles_around(x, y) == 1 && (getTextureUpLeft(x, y) == MapTextureID.WATER
-				|| getTextureUpRight(x, y) == MapTextureID.WATER || getTextureDownLeft(x, y) == MapTextureID.WATER
-				|| getTextureDownRight(x, y) == MapTextureID.WATER));
+	public int nb_of_cold_lava_tiles_around(int x, int y) {
+		int nb_of_cold_lava_tiles = 0;
+		if (getTextureLeft(x, y) == MapTextureID.COLD_LAVA)
+			nb_of_cold_lava_tiles++;
+		if (getTextureRight(x, y) == MapTextureID.COLD_LAVA)
+			nb_of_cold_lava_tiles++;
+		if (getTextureUpLeft(x, y) == MapTextureID.COLD_LAVA)
+			nb_of_cold_lava_tiles++;
+		if (getTextureUpRight(x, y) == MapTextureID.COLD_LAVA)
+			nb_of_cold_lava_tiles++;
+		if (getTextureDownLeft(x, y) == MapTextureID.COLD_LAVA)
+			nb_of_cold_lava_tiles++;
+		if (getTextureDownRight(x, y) == MapTextureID.COLD_LAVA)
+			nb_of_cold_lava_tiles++;
+		if (getTextureUp(x, y) == MapTextureID.COLD_LAVA)
+			nb_of_cold_lava_tiles++;
+		if (getTextureDown(x, y) == MapTextureID.COLD_LAVA)
+			nb_of_cold_lava_tiles++;
+		return nb_of_cold_lava_tiles;
 	}
-
-	public int select_corner_typeB(int x, int y) { // celui ou il n'y a qu'un seul coin d'eau
-		if (nb_of_water_tiles_around(x, y) == 1) {
-			if (getTextureUpLeft(x, y) == MapTextureID.WATER)
-				return 0; // upleft est water
-			else if (getTextureUpRight(x, y) == MapTextureID.WATER)
-				return 1; // upRight est water
-			else if (getTextureDownLeft(x, y) == MapTextureID.WATER)
-				return 2; // downleft est water
-			else if (getTextureDownRight(x, y) == MapTextureID.WATER)
-				return 3; // downRight est water
-		}
-		return 4; // ce n'est pas un corner typeB
-	}
-
 	
 
+	public int nb_of_snow_tiles_around(int x, int y) {
+		int nb_of_snow_tiles = 0;
+		if (getTextureLeft(x, y) == MapTextureID.SNOW)
+			nb_of_snow_tiles++;
+		if (getTextureRight(x, y) == MapTextureID.SNOW)
+			nb_of_snow_tiles++;
+		if (getTextureUpLeft(x, y) == MapTextureID.SNOW)
+			nb_of_snow_tiles++;
+		if (getTextureUpRight(x, y) == MapTextureID.SNOW)
+			nb_of_snow_tiles++;
+		if (getTextureDownLeft(x, y) == MapTextureID.SNOW)
+			nb_of_snow_tiles++;
+		if (getTextureDownRight(x, y) == MapTextureID.SNOW)
+			nb_of_snow_tiles++;
+		if (getTextureUp(x, y) == MapTextureID.SNOW)
+			nb_of_snow_tiles++;
+		if (getTextureDown(x, y) == MapTextureID.SNOW)
+			nb_of_snow_tiles++;
+		return nb_of_snow_tiles;
+	}
+	
+	
+	public boolean is_near_cratere(int x, int y) {
+		return (getTextureRight(x,y) == MapTextureID.CRATERE || getTextureDownRight(x,y) == MapTextureID.CRATERE || getTextureDown(x,y) == MapTextureID.CRATERE || getTextureDownLeft(x,y) == MapTextureID.CRATERE
+				|| getTextureLeft(x,y) == MapTextureID.CRATERE || getTextureUpLeft(x,y) == MapTextureID.CRATERE || getTextureUp(x,y) == MapTextureID.CRATERE || getTextureUpRight(x,y) == MapTextureID.CRATERE);
+	}
 	
 	
 	// GETTERS TEXTURE rewritten
@@ -690,12 +737,61 @@ public class WorldMap {
 	}
 	
 	
+	
+	public Position get_lowest_point(int x, int y) {
+		double lowest_alt = 1000;
+		int lowest_pX = x;
+		int lowest_pY = y;
+		if(getAltitudeLeft(x,y) < lowest_alt) {
+			lowest_pX = x;
+			lowest_pY = (y-1 + mapWidth) % mapWidth;
+			lowest_alt = getAltitudeLeft(x,y);
+		}
+		if(getAltitudeDownLeft(x,y) < lowest_alt) {
+			lowest_pX =  (x+1 + mapHeight) % mapHeight;
+			lowest_pY =  (y-1 + mapWidth) % mapWidth;
+			lowest_alt = getAltitudeDownLeft(x,y);
+		}
+		if(getAltitudeDown(x,y) < lowest_alt) {
+			lowest_pX = (x+1 + mapHeight) % mapHeight;
+			lowest_pY = y;
+			lowest_alt = getAltitudeDown(x,y);
+		}
+		if(getAltitudeDownRight(x,y) < lowest_alt) {
+			lowest_pX = (x+1 + mapHeight) % mapHeight;
+			lowest_pY = (y+1 + mapWidth) % mapWidth;
+			lowest_alt = getAltitudeDownRight(x,y);
+		}
+		if(getAltitudeRight(x,y) < lowest_alt) {
+			lowest_pX = x;
+			lowest_pY = (y+1 + mapWidth) % mapWidth;
+			lowest_alt = getAltitudeRight(x,y);
+		}
+		if(getAltitudeUpRight(x,y) < lowest_alt) {
+			lowest_pX = (x-1 + mapHeight) % mapHeight;
+			lowest_pY =  (y+1 + mapWidth) % mapWidth;
+			lowest_alt = getAltitudeUpRight(x,y);
+		}
+		if(getAltitudeUp(x,y) < lowest_alt) {
+			lowest_pX = (x-1 + mapHeight) % mapHeight;
+			lowest_pY = y;
+			lowest_alt = getAltitudeUp(x,y);
+		}
+		else if(getAltitudeUpLeft(x,y) < lowest_alt){
+			lowest_pX = (x-1 + mapHeight) % mapHeight;;
+			lowest_pY =  (y-1 + mapWidth) % mapWidth;
+			lowest_alt = getAltitudeUpLeft(x,y);
+		}
+		
+		return new Position(lowest_pX, lowest_pY);
+	}
+
 
 	public void affichageBruitPerlin() {
 		for (int x = 0; x < mapWidth; x++) { 
 			for (int y = 0; y < mapHeight; y++)
 			  System.out.print(String.format("%.2f ", mapAltitude[x][y]));
-			
+			System.out.println();
 		}
 	}
 }

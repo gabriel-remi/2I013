@@ -38,11 +38,13 @@ public class Ecosystem extends JPanel implements KeyListener {
 	// interactions with the keyboard
 	boolean key_zone, key_aggro, key_season, key_lava, key_rain, key_path, key_agents;
 
+	public int duree_pluie = 0;
 	public static int darkness = 0;
 	public static WorldMap map;
 
 	// Environment
 	public static int cpt, season;
+	public static Position spawn_pos;
 
 	// agents
 	public static ArrayList<Agent> agents;
@@ -55,14 +57,12 @@ public class Ecosystem extends JPanel implements KeyListener {
 		setFocusable(true);
 		season = (int) (Math.random() * 4);
 		initAgents();
-		initElementaires();
 		initPanel();
 		initFrame();
-
+initElementaires();
 		key_zone = key_season = key_aggro = key_lava = key_rain = false;
 		this.key_agents = true;
 	}
-
 	private void initElementaires() {
 		Ecosystem.elements = new ArrayList<Elementaire>();
 		Ecosystem.elements.add(new Elementaire(1, new Position(0, 0)));
@@ -79,7 +79,6 @@ public class Ecosystem extends JPanel implements KeyListener {
 		Ecosystem.elements.add(new Elementaire(3, new Position(0, 0)));
 
 	}
-
 	private void initAgents() {
 
 		Ecosystem.agents = new ArrayList<Agent>();
@@ -193,14 +192,6 @@ public class Ecosystem extends JPanel implements KeyListener {
 		}
 	}
 
-	public void trees_birth() {
-		for (int i = 0; i < map.getWidth(); i++) {
-			for (int j = 0; j < map.getHeight(); j++) {
-				if (Math.random() < P_TREE_BIRTH)
-					map.setTree(i, j);
-			}
-		}
-	}
 
 	private void update() {
 
@@ -228,23 +219,19 @@ public class Ecosystem extends JPanel implements KeyListener {
 		Toolkit.getDefaultToolkit().sync();
 		if (this.key_agents) {
 			drawAgents(g2);
-			Toolkit.getDefaultToolkit().sync();
 		}
 		if (key_path) {
 			drawPath(g2);
 		}
-		Toolkit.getDefaultToolkit().sync();
+		
 		drawElements(g2);
-		Toolkit.getDefaultToolkit().sync();
 		drawagentSkills(g2);
-		Toolkit.getDefaultToolkit().sync();
-
 		drawDamage(g2);
 
 		Toolkit.getDefaultToolkit().sync();
 
 	}
-
+	
 	private synchronized void drawElements(Graphics2D g2) {
 		for (Elementaire element : elements) {
 			int x = element.p.x;
@@ -270,37 +257,37 @@ public class Ecosystem extends JPanel implements KeyListener {
 
 	}
 
-	private synchronized void drawDamage(Graphics2D g2) {
-		for (Agent agent : this.agents) {
+	private void drawDamage(Graphics2D g2) {
+		for (Agent agent : Ecosystem.agents) {
 			if (agent instanceof Player && ((Player) agent).damageDealt != null) {
 				g2.setColor(new Color(255, 0, 120));
 				Player player = (Player) agent;
 				g2.setFont(new Font("TimesRoman", Font.BOLD, SPRITE_SIZE));
-				g2.drawString("-" + Integer.toString(player.damageDealt), player.target.cur_pos.x * this.SPRITE_SIZE,
-						(player.target.cur_pos.y - 1) * this.SPRITE_SIZE);
+				g2.drawString("-" + Integer.toString(player.damageDealt), player.target.cur_pos.x * Ecosystem.SPRITE_SIZE,
+						(player.target.cur_pos.y - 1) * Ecosystem.SPRITE_SIZE);
 
 			}
 			if (agent instanceof Player && ((Player) agent).miss) {
 				g2.setColor(new Color(255, 0, 120));
 				Player player = (Player) agent;
 				g2.setFont(new Font("TimesRoman", Font.BOLD, SPRITE_SIZE));
-				g2.drawString("MISSSSS", player.target.cur_pos.x * this.SPRITE_SIZE,
-						(player.target.cur_pos.y - 1) * this.SPRITE_SIZE);
+				g2.drawString("MISSSSS", player.target.cur_pos.x * Ecosystem.SPRITE_SIZE,
+						(player.target.cur_pos.y - 1) * Ecosystem.SPRITE_SIZE);
 			}
 
 		}
 
 	}
 
-	private synchronized void drawagentSkills(Graphics2D g2) {
-		for (Agent agent : this.agents) {
+	private void drawagentSkills(Graphics2D g2) {
+		for (Agent agent : Ecosystem.agents) {
 			if (agent instanceof Robot && ((Robot) agent).laserBeam) {
 				g2.setColor(new Color(255, 0, 0, 180));
-				g2.setStroke(new BasicStroke(this.SPRITE_SIZE));
+				g2.setStroke(new BasicStroke(Ecosystem.SPRITE_SIZE));
 				Robot robt = (Robot) agent;
 				Player player = (Player) robt.laserTarget;
-				g2.draw(new Line2D.Float(robt.cur_pos.x * this.SPRITE_SIZE, this.SPRITE_SIZE * robt.cur_pos.y,
-						this.SPRITE_SIZE * player.cur_pos.x, this.SPRITE_SIZE * player.cur_pos.y));
+				g2.draw(new Line2D.Float(robt.cur_pos.x * Ecosystem.SPRITE_SIZE, Ecosystem.SPRITE_SIZE * robt.cur_pos.y,
+						Ecosystem.SPRITE_SIZE * player.cur_pos.x, Ecosystem.SPRITE_SIZE * player.cur_pos.y));
 			}
 
 		}
@@ -308,9 +295,9 @@ public class Ecosystem extends JPanel implements KeyListener {
 	}
 
 	private void drawPlayerRevivingZone(Graphics2D g2) {
-		g2.drawImage(SpriteLoader.loader.spawn[0], Player.revivingPosition.x * this.SPRITE_SIZE - this.SPRITE_SIZE / 2,
-				Player.revivingPosition.y * this.SPRITE_SIZE - this.SPRITE_SIZE / 2, this.SPRITE_SIZE * 2,
-				this.SPRITE_SIZE * 2, this);
+		g2.drawImage(SpriteLoader.loader.spawn, Player.revivingPosition.x * Ecosystem.SPRITE_SIZE - Ecosystem.SPRITE_SIZE / 2,
+				Player.revivingPosition.y * Ecosystem.SPRITE_SIZE - Ecosystem.SPRITE_SIZE / 2, Ecosystem.SPRITE_SIZE * 2,
+				Ecosystem.SPRITE_SIZE * 2, this);
 
 	}
 
@@ -340,22 +327,76 @@ public class Ecosystem extends JPanel implements KeyListener {
 
 	// Drawing the environment
 	private synchronized void drawMap(Graphics2D g2) {
-		switch (season) {
-		case SPRING:
-			drawMapTextureSpring(g2);
-			break;
-		case SUMMER:
-			drawMapTextureSummer(g2);
-			break;
-		case FALL:
-			drawMapTextureFall(g2);
-			break;
-		case WINTER:
-			drawMapTextureWinter(g2);
-			break;
-		}
+		drawMapTexture(g2);
 		drawMapEntities(g2);
 	}
+	
+	
+	public synchronized void drawMapTexture(Graphics2D g2) {
+		
+		for (int x = 0; x < map.getMapTexture().length; x++) {
+			for (int y = 0; y < map.getMapTexture()[0].length; y++) {
+				switch (map.getMapTexture()[x][y]) {
+				case MapTextureID.GROUND:
+					switch(season) {
+					case SPRING:
+						draw_spring_ground(g2,x,y);
+						break;
+					case SUMMER:
+						draw_summer_ground(g2,x,y);
+						break;
+					case FALL:
+						draw_fall_ground(g2,x,y);
+						break;
+					case WINTER:
+						draw_winter_ground(g2,x,y);
+						break;
+					}
+					break;
+					
+				case MapTextureID.ICE:
+					g2.drawImage(SpriteLoader.loader.ice, x * SPRITE_SIZE, y * SPRITE_SIZE,
+							SPRITE_SIZE, SPRITE_SIZE, this);
+					break;
+				case MapTextureID.WATER:
+					drawWater(g2,x,y);
+					break;
+
+				case MapTextureID.MOUNTAIN:
+					drawMountain(g2,x,y);
+					break;
+					
+					
+				case MapTextureID.LAVA:
+						g2.drawImage(SpriteLoader.loader.lava, x * SPRITE_SIZE, y * SPRITE_SIZE,
+								SPRITE_SIZE, SPRITE_SIZE, this);
+					if(x==map.getHighest_pX() && y == map.getHighest_pY())
+						g2.drawImage(SpriteLoader.loader.cratere, x * SPRITE_SIZE, y * SPRITE_SIZE,
+								SPRITE_SIZE, SPRITE_SIZE, this);
+					break;
+				case MapTextureID.CRATERE:
+					g2.drawImage(SpriteLoader.loader.cratere, x * SPRITE_SIZE, y * SPRITE_SIZE,
+							SPRITE_SIZE, SPRITE_SIZE, this);
+					break;
+				case MapTextureID.COLD_LAVA:
+					g2.drawImage(SpriteLoader.loader.cold_lava, x * SPRITE_SIZE, y * SPRITE_SIZE,
+							SPRITE_SIZE, SPRITE_SIZE, this);
+					break;
+				case MapTextureID.SNOW:
+					g2.setColor(Color.decode("#FFFFFF"));
+					g2.fillRect(x * SPRITE_SIZE, y * SPRITE_SIZE,
+						SPRITE_SIZE, SPRITE_SIZE);
+					break;
+				case MapTextureID.SPAWN:
+					g2.drawImage(SpriteLoader.loader.spawn, (Ecosystem.spawn_pos.x - 1) * Ecosystem.SPRITE_SIZE,
+							(Ecosystem.spawn_pos.y - 1) * Ecosystem.SPRITE_SIZE, Ecosystem.SPRITE_SIZE * 3, Ecosystem.SPRITE_SIZE * 3,
+							this);
+					break;	
+				}
+			}
+		}
+	}
+		
 
 	private synchronized void drawDetectionArea(Graphics2D g2) {
 
@@ -432,604 +473,224 @@ public class Ecosystem extends JPanel implements KeyListener {
 		Zone.healingZone.updateAnimationTime();
 	}
 
-	/////////////////////////////////////////////////////////////////////////
-	//// SPRING TEXTURES ////
-	/////////////////////////////////////////////////////////////////////////
-
-	private void drawMapTextureSpring(Graphics2D g2) {
-
-		for (int x = 0; x < map.getMapTexture().length; x++) {
-			for (int y = 0; y < map.getMapTexture()[0].length; y++) {
-				switch (map.getMapTexture()[x][y]) {
-				case MapTextureID.GROUND:
-					if (map.is_corner_B(x, y))
-						draw_spring_corner_shore_B(g2, x, y);
-					else if (map.is_corner_A(x, y))
-						draw_spring_corner_shore_A(g2, x, y);
+	
+	
+	
+	public void drawWater(Graphics g2, int x, int y) {
+		if(Ecosystem.season == Ecosystem.WINTER) {
+			if(map.is_raining) {
+				if(map.mapAltitude[x][y] < -25 + map.hauteur_pluie) {
+					if(Math.random()<0.5)
+						g2.drawImage(SpriteLoader.loader.deep_water_rain1, x * SPRITE_SIZE, y * SPRITE_SIZE,
+								SPRITE_SIZE, SPRITE_SIZE, this);
 					else
-						draw_spring_ground(g2, x, y);
-					break;
-				case MapTextureID.WATER:
-					if (map.is_raining) {
-						if (map.mapAltitude[x][y] < -25) {
-							if (Math.random() < 0.5)
-								g2.drawImage(SpriteLoader.loader.deep_water_rain1, x * SPRITE_SIZE, y * SPRITE_SIZE,
-										SPRITE_SIZE, SPRITE_SIZE, this);
-							else
-								g2.drawImage(SpriteLoader.loader.deep_water_rain2, x * SPRITE_SIZE, y * SPRITE_SIZE,
-										SPRITE_SIZE, SPRITE_SIZE, this);
-						} else {
-							if (Math.random() < 0.5)
-								g2.drawImage(SpriteLoader.loader.water_rain1, x * SPRITE_SIZE, y * SPRITE_SIZE,
-										SPRITE_SIZE, SPRITE_SIZE, this);
-							else
-								g2.drawImage(SpriteLoader.loader.water_rain2, x * SPRITE_SIZE, y * SPRITE_SIZE,
-										SPRITE_SIZE, SPRITE_SIZE, this);
-						}
-
-					} else {
-						if (map.mapAltitude[x][y] < -25) {
-							if (Math.random() < 0.5)
-								g2.drawImage(SpriteLoader.loader.deep_water1, x * SPRITE_SIZE, y * SPRITE_SIZE,
-										SPRITE_SIZE, SPRITE_SIZE, this);
-							else
-								g2.drawImage(SpriteLoader.loader.deep_water2, x * SPRITE_SIZE, y * SPRITE_SIZE,
-										SPRITE_SIZE, SPRITE_SIZE, this);
-						} else {
-							if (Math.random() < 0.5)
-								g2.drawImage(SpriteLoader.loader.water1, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-										SPRITE_SIZE, this);
-							else
-								g2.drawImage(SpriteLoader.loader.water2, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-										SPRITE_SIZE, this);
-						}
-					}
-
-					break;
-
-				case MapTextureID.MOUNTAIN:
-					if (map.getAltitude(x, y) < 10) {
-						g2.setColor(Color.decode("#6e3300"));
-						g2.fillRect(x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE, SPRITE_SIZE);
-					} else if (map.getAltitude(x, y) < 17 && map.getAltitude(x, y) >= 10) {
-						g2.setColor(Color.decode("#582900"));
-						g2.fillRect(x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE, SPRITE_SIZE);
-					} else {
-						g2.setColor(Color.decode("#462100"));
-						g2.fillRect(x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE, SPRITE_SIZE);
-					}
-					break;
-				case MapTextureID.LAVA:
-					if (map.lave_coule)
-						g2.drawImage(SpriteLoader.loader.lava, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-								SPRITE_SIZE, this);
+						g2.drawImage(SpriteLoader.loader.deep_water_rain2, x * SPRITE_SIZE, y * SPRITE_SIZE,
+								SPRITE_SIZE, SPRITE_SIZE, this);
+				}
+				else {
+					if(Math.random() < 0.5)
+						g2.drawImage(SpriteLoader.loader.water_rain1, x * SPRITE_SIZE, y * SPRITE_SIZE,
+						SPRITE_SIZE, SPRITE_SIZE, this);
 					else
-						g2.drawImage(SpriteLoader.loader.cold_lava, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-								SPRITE_SIZE, this);
-					if (x == map.getHighest_pX() && y == map.getHighest_pY())
-						g2.drawImage(SpriteLoader.loader.cratere, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-								SPRITE_SIZE, this);
-					break;
-				case MapTextureID.CRATERE:
-					g2.drawImage(SpriteLoader.loader.cratere, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-							SPRITE_SIZE, this);
-					break;
-				case MapTextureID.COLD_LAVA:
-					g2.drawImage(SpriteLoader.loader.cold_lava, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-							SPRITE_SIZE, this);
-					break;
+						g2.drawImage(SpriteLoader.loader.water_rain2, x * SPRITE_SIZE, y * SPRITE_SIZE,
+								SPRITE_SIZE, SPRITE_SIZE, this);
+				}
 
+			}else {
+				if(map.mapAltitude[x][y] < -25) {
+					if(Math.random()<0.5)
+						g2.drawImage(SpriteLoader.loader.deep_water1, x * SPRITE_SIZE, y * SPRITE_SIZE,
+								SPRITE_SIZE, SPRITE_SIZE, this);
+					else
+						g2.drawImage(SpriteLoader.loader.deep_water2, x * SPRITE_SIZE, y * SPRITE_SIZE,
+								SPRITE_SIZE, SPRITE_SIZE, this);
+				}
+				else {
+					if(Math.random() < 0.5)
+						g2.drawImage(SpriteLoader.loader.water1, x * SPRITE_SIZE, y * SPRITE_SIZE,
+						SPRITE_SIZE, SPRITE_SIZE, this);
+					else
+						g2.drawImage(SpriteLoader.loader.water2, x * SPRITE_SIZE, y * SPRITE_SIZE,
+								SPRITE_SIZE, SPRITE_SIZE, this);
+				}
+			}					
+			
+		}else {
+			if(map.is_raining) {
+				if(map.mapAltitude[x][y] < -25) {
+					if(Math.random()<0.5)
+						g2.drawImage(SpriteLoader.loader.deep_water_rain1, x * SPRITE_SIZE, y * SPRITE_SIZE,
+								SPRITE_SIZE, SPRITE_SIZE, this);
+					else
+						g2.drawImage(SpriteLoader.loader.deep_water_rain2, x * SPRITE_SIZE, y * SPRITE_SIZE,
+								SPRITE_SIZE, SPRITE_SIZE, this);
+				}
+				else {
+					if(Math.random() < 0.5)
+						g2.drawImage(SpriteLoader.loader.water_rain1, x * SPRITE_SIZE, y * SPRITE_SIZE,
+						SPRITE_SIZE, SPRITE_SIZE, this);
+					else
+						g2.drawImage(SpriteLoader.loader.water_rain2, x * SPRITE_SIZE, y * SPRITE_SIZE,
+								SPRITE_SIZE, SPRITE_SIZE, this);
+				}
+
+			}else {
+				if(map.mapAltitude[x][y] < -25) {
+					if(Math.random()<0.5)
+						g2.drawImage(SpriteLoader.loader.deep_water1, x * SPRITE_SIZE, y * SPRITE_SIZE,
+								SPRITE_SIZE, SPRITE_SIZE, this);
+					else
+						g2.drawImage(SpriteLoader.loader.deep_water2, x * SPRITE_SIZE, y * SPRITE_SIZE,
+								SPRITE_SIZE, SPRITE_SIZE, this);
+				}
+				else {
+					if(Math.random() < 0.5)
+						g2.drawImage(SpriteLoader.loader.water1, x * SPRITE_SIZE, y * SPRITE_SIZE,
+						SPRITE_SIZE, SPRITE_SIZE, this);
+					else
+						g2.drawImage(SpriteLoader.loader.water2, x * SPRITE_SIZE, y * SPRITE_SIZE,
+								SPRITE_SIZE, SPRITE_SIZE, this);
 				}
 			}
 		}
 	}
+	
+	
+	
+	public void drawMountain(Graphics2D g2, int x, int y) {
+		if(map.is_raining) {
+			if(season == WINTER) {
+				if(Math.random()<0.5) {
+					if(map.getAltitude(x,y) < 10) 
+						g2.drawImage(SpriteLoader.loader.mont1_snow1, x * SPRITE_SIZE, y * SPRITE_SIZE,
+								SPRITE_SIZE, SPRITE_SIZE, this);
+					else if(map.getAltitude(x,y) < 17 && map.getAltitude(x, y) >= 10) 
+						g2.drawImage(SpriteLoader.loader.mont2_snow1, x * SPRITE_SIZE, y * SPRITE_SIZE,
+								SPRITE_SIZE, SPRITE_SIZE, this);
+					else 
+						g2.drawImage(SpriteLoader.loader.mont3_snow1, x * SPRITE_SIZE, y * SPRITE_SIZE,
+								SPRITE_SIZE, SPRITE_SIZE, this);
+				}
+				else {
+					if(map.getAltitude(x,y) < 10) 
+						g2.drawImage(SpriteLoader.loader.mont1_snow2, x * SPRITE_SIZE, y * SPRITE_SIZE,
+								SPRITE_SIZE, SPRITE_SIZE, this);
+					else if(map.getAltitude(x,y) < 17 && map.getAltitude(x, y) >= 10) 
+						g2.drawImage(SpriteLoader.loader.mont2_snow2, x * SPRITE_SIZE, y * SPRITE_SIZE,
+								SPRITE_SIZE, SPRITE_SIZE, this);
+					else 
+						g2.drawImage(SpriteLoader.loader.mont3_snow2, x * SPRITE_SIZE, y * SPRITE_SIZE,
+								SPRITE_SIZE, SPRITE_SIZE, this);
+				}
+			}
+			else {
+				if(Math.random()<0.5) {
+					if(map.getAltitude(x,y) < 10) 
+						g2.drawImage(SpriteLoader.loader.mont1_rain1, x * SPRITE_SIZE, y * SPRITE_SIZE,
+								SPRITE_SIZE, SPRITE_SIZE, this);
+					else if(map.getAltitude(x,y) < 17 && map.getAltitude(x, y) >= 10) 
+						g2.drawImage(SpriteLoader.loader.mont2_rain1, x * SPRITE_SIZE, y * SPRITE_SIZE,
+								SPRITE_SIZE, SPRITE_SIZE, this);
+					else 
+						g2.drawImage(SpriteLoader.loader.mont3_rain1, x * SPRITE_SIZE, y * SPRITE_SIZE,
+								SPRITE_SIZE, SPRITE_SIZE, this);
+				}else {
+					if(map.getAltitude(x,y) < 10)
+					g2.drawImage(SpriteLoader.loader.mont1_rain2, x * SPRITE_SIZE, y * SPRITE_SIZE,
+							SPRITE_SIZE, SPRITE_SIZE, this);
+				else if(map.getAltitude(x,y) < 17 && map.getAltitude(x, y) >= 10) 
+					g2.drawImage(SpriteLoader.loader.mont2_rain2, x * SPRITE_SIZE, y * SPRITE_SIZE,
+							SPRITE_SIZE, SPRITE_SIZE, this);
+				else 
+					g2.drawImage(SpriteLoader.loader.mont3_rain2, x * SPRITE_SIZE, y * SPRITE_SIZE,
+							SPRITE_SIZE, SPRITE_SIZE, this);
+				}
+				
+			}
+			
+		}else {
+			if(map.getAltitude(x,y) < 10)
+			g2.drawImage(SpriteLoader.loader.mont1, x * SPRITE_SIZE, y * SPRITE_SIZE,
+					SPRITE_SIZE, SPRITE_SIZE, this);
+		else if(map.getAltitude(x,y) < 17 && map.getAltitude(x, y) >= 10) 
+			g2.drawImage(SpriteLoader.loader.mont2, x * SPRITE_SIZE, y * SPRITE_SIZE,
+					SPRITE_SIZE, SPRITE_SIZE, this);
+		else 
+			g2.drawImage(SpriteLoader.loader.mont3, x * SPRITE_SIZE, y * SPRITE_SIZE,
+					SPRITE_SIZE, SPRITE_SIZE, this);
+		}
+	}
 
+
+//SPRING GROUND TEXTURES
 	private void draw_spring_ground(Graphics g2, int x, int y) {
-		if (map.getTextureLeft(x, y) == MapTextureID.WATER)
-			g2.drawImage(SpriteLoader.loader.spring_shore_right, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-					SPRITE_SIZE, this);
-		else if (map.getTextureRight(x, y) == MapTextureID.WATER)
-			g2.drawImage(SpriteLoader.loader.spring_shore_left, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-					SPRITE_SIZE, this);
-		else if (map.getTextureUp(x, y) == MapTextureID.WATER)
-			g2.drawImage(SpriteLoader.loader.spring_shore_down, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-					SPRITE_SIZE, this);
-		else if (map.getTextureDown(x, y) == MapTextureID.WATER)
-			g2.drawImage(SpriteLoader.loader.spring_shore_up, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-					SPRITE_SIZE, this);
+		if(map.is_raining) {
+			if(duree_pluie % 2 == 0)
+				g2.drawImage(SpriteLoader.loader.spring_rain, x * SPRITE_SIZE, y * SPRITE_SIZE,
+						SPRITE_SIZE, SPRITE_SIZE, this);
+			else
+				g2.drawImage(SpriteLoader.loader.spring_rain2, x * SPRITE_SIZE, y * SPRITE_SIZE,
+						SPRITE_SIZE, SPRITE_SIZE, this);
+			duree_pluie++;
+		}else
+			g2.drawImage(SpriteLoader.loader.spring_grass, x * SPRITE_SIZE, y * SPRITE_SIZE,
+				SPRITE_SIZE, SPRITE_SIZE, this);
+	}
+		
+	
+		
+//SUMMER GROUND TEXTURES	
+		private void draw_summer_ground(Graphics g2, int x, int y) {
+			if(map.is_raining) {
+				if(duree_pluie%2 == 0) 
+					g2.drawImage(SpriteLoader.loader.summer_rain, x * SPRITE_SIZE, y * SPRITE_SIZE,
+							SPRITE_SIZE, SPRITE_SIZE, this);
+				else
+					g2.drawImage(SpriteLoader.loader.summer_rain2, x * SPRITE_SIZE, y * SPRITE_SIZE,
+							SPRITE_SIZE, SPRITE_SIZE, this);
+				duree_pluie++;
+			}else
+			g2.drawImage(SpriteLoader.loader.summer_grass, x * SPRITE_SIZE, y * SPRITE_SIZE,
+					SPRITE_SIZE, SPRITE_SIZE, this);
+		}
+
+			
+		
+//FALL GROUND TEXTURES
+private void draw_fall_ground(Graphics g2, int x, int y) {
+	if(map.is_raining) {
+		if(Math.random()<0.5) 
+			g2.drawImage(SpriteLoader.loader.fall_rain, x * SPRITE_SIZE, y * SPRITE_SIZE,
+					SPRITE_SIZE, SPRITE_SIZE, this);
 		else
-			g2.drawImage(SpriteLoader.loader.spring_grass, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE, SPRITE_SIZE,
-					this);
-	}
+			g2.drawImage(SpriteLoader.loader.fall_rain2, x * SPRITE_SIZE, y * SPRITE_SIZE,
+					SPRITE_SIZE, SPRITE_SIZE, this);
+		duree_pluie++;
+	}else
+	g2.drawImage(SpriteLoader.loader.fall_grass, x * SPRITE_SIZE, y * SPRITE_SIZE,
+			SPRITE_SIZE, SPRITE_SIZE, this);
+}
 
-	private void draw_spring_corner_shore_A(Graphics g2, int x, int y) {
-		switch (map.select_corner_typeA(x, y)) {
-		case 0:
-			g2.drawImage(SpriteLoader.loader.ssc_bottom_left, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-					SPRITE_SIZE, this);
-			break;
-		case 1:
-			g2.drawImage(SpriteLoader.loader.ssc_bottom_right, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-					SPRITE_SIZE, this);
-			break;
-		case 2:
-			g2.drawImage(SpriteLoader.loader.ssc_top_right, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE, SPRITE_SIZE,
-					this);
-			break;
-		case 3:
-			g2.drawImage(SpriteLoader.loader.ssc_top_left, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE, SPRITE_SIZE,
-					this);
-			break;
-		}
-	}
 
-	public void draw_spring_corner_mount_A(Graphics g2, int x, int y) {
-		switch (map.select_corner_typeA(x, y)) {
-		case 0:
-			g2.drawImage(SpriteLoader.loader.ssc_bottom_left, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-					SPRITE_SIZE, this);
-			break;
-		case 1:
-			g2.drawImage(SpriteLoader.loader.ssc_bottom_right, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-					SPRITE_SIZE, this);
-			break;
-		case 2:
-			g2.drawImage(SpriteLoader.loader.ssc_top_right, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE, SPRITE_SIZE,
-					this);
-			break;
-		case 3:
-			g2.drawImage(SpriteLoader.loader.ssc_top_left, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE, SPRITE_SIZE,
-					this);
-			break;
-		}
-	}
 
-	private void draw_spring_corner_shore_B(Graphics g2, int x, int y) {
-		switch (map.select_corner_typeB(x, y)) {
-		case 0:
-			g2.drawImage(SpriteLoader.loader.ssc_top_left_B, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE, SPRITE_SIZE,
-					this);
-			break;
-		case 1:
-			g2.drawImage(SpriteLoader.loader.ssc_top_right_B, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-					SPRITE_SIZE, this);
-			break;
-		case 2:
-			g2.drawImage(SpriteLoader.loader.ssc_bottom_left_B, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-					SPRITE_SIZE, this);
-			break;
-		case 3:
-			g2.drawImage(SpriteLoader.loader.ssc_bottom_right_B, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-					SPRITE_SIZE, this);
-			break;
-		}
-	}
 
-	/////////////////////////////////////////////////////////////////////////
-	//// SUMMER TEXTURES /////
-	/////////////////////////////////////////////////////////////////////////
-
-	private void drawMapTextureSummer(Graphics2D g2) {
-		for (int x = 0; x < map.getMapTexture().length; x++) {
-			for (int y = 0; y < map.getMapTexture()[0].length; y++) {
-				switch (map.getMapTexture()[x][y]) {
-				case MapTextureID.GROUND:
-					if (map.getMapTexture()[x][y] == MapTextureID.WATER) {
-						g2.drawImage(SpriteLoader.loader.water, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-								SPRITE_SIZE, this);
-					} else {
-						if (map.is_corner_B(x, y))
-							draw_summer_corner_shore_B(g2, x, y);
-						else if (map.is_corner_A(x, y))
-							draw_summer_corner_shore_A(g2, x, y);
-						else
-							draw_summer_ground(g2, x, y);
-					}
-					break;
-				case MapTextureID.WATER:
-					if (map.is_raining) {
-						if (map.mapAltitude[x][y] < -25) {
-							if (Math.random() < 0.5)
-								g2.drawImage(SpriteLoader.loader.deep_water_rain1, x * SPRITE_SIZE, y * SPRITE_SIZE,
-										SPRITE_SIZE, SPRITE_SIZE, this);
-							else
-								g2.drawImage(SpriteLoader.loader.deep_water_rain2, x * SPRITE_SIZE, y * SPRITE_SIZE,
-										SPRITE_SIZE, SPRITE_SIZE, this);
-						} else {
-							if (Math.random() < 0.5)
-								g2.drawImage(SpriteLoader.loader.water_rain1, x * SPRITE_SIZE, y * SPRITE_SIZE,
-										SPRITE_SIZE, SPRITE_SIZE, this);
-							else
-								g2.drawImage(SpriteLoader.loader.water_rain2, x * SPRITE_SIZE, y * SPRITE_SIZE,
-										SPRITE_SIZE, SPRITE_SIZE, this);
-						}
-
-					} else {
-						if (map.mapAltitude[x][y] < -25) {
-							if (Math.random() < 0.5)
-								g2.drawImage(SpriteLoader.loader.deep_water1, x * SPRITE_SIZE, y * SPRITE_SIZE,
-										SPRITE_SIZE, SPRITE_SIZE, this);
-							else
-								g2.drawImage(SpriteLoader.loader.deep_water2, x * SPRITE_SIZE, y * SPRITE_SIZE,
-										SPRITE_SIZE, SPRITE_SIZE, this);
-						} else {
-							if (Math.random() < 0.5)
-								g2.drawImage(SpriteLoader.loader.water1, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-										SPRITE_SIZE, this);
-							else
-								g2.drawImage(SpriteLoader.loader.water2, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-										SPRITE_SIZE, this);
-						}
-					}
-
-					break;
-
-				case MapTextureID.MOUNTAIN:
-					if (map.getAltitude(x, y) < 10) {
-						g2.setColor(Color.decode("#6e3300"));
-						g2.fillRect(x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE, SPRITE_SIZE);
-					} else if (map.getAltitude(x, y) < 17 && map.getAltitude(x, y) >= 10) {
-						g2.setColor(Color.decode("#582900"));
-						g2.fillRect(x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE, SPRITE_SIZE);
-					} else {
-						g2.setColor(Color.decode("#462100"));
-						g2.fillRect(x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE, SPRITE_SIZE);
-					}
-					break;
-				case MapTextureID.LAVA:
-					if (map.lave_coule)
-						g2.drawImage(SpriteLoader.loader.lava, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-								SPRITE_SIZE, this);
-					else
-						g2.drawImage(SpriteLoader.loader.cold_lava, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-								SPRITE_SIZE, this);
-					break;
-				case MapTextureID.CRATERE:
-					g2.drawImage(SpriteLoader.loader.cratere, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-							SPRITE_SIZE, this);
-					break;
-				case MapTextureID.COLD_LAVA:
-					g2.drawImage(SpriteLoader.loader.cold_lava, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-							SPRITE_SIZE, this);
-					break;
-
-				}
-
-			}
-		}
-	}
-
-	private void draw_summer_ground(Graphics g2, int x, int y) {
-		if (map.getTextureLeft(x, y) == MapTextureID.WATER)
-			g2.drawImage(SpriteLoader.loader.summer_shore_left, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-					SPRITE_SIZE, this);
-		else if (map.getTextureRight(x, y) == MapTextureID.WATER)
-			g2.drawImage(SpriteLoader.loader.summer_shore_up, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-					SPRITE_SIZE, this);
-		else if (map.getTextureDown(x, y) == MapTextureID.WATER)
-			g2.drawImage(SpriteLoader.loader.summer_shore_down, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-					SPRITE_SIZE, this);
-		else if (map.getTextureUp(x, y) == MapTextureID.WATER)
-			g2.drawImage(SpriteLoader.loader.summer_shore_right, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-					SPRITE_SIZE, this);
+	
+		
+//WINTER TEXTURES
+private void draw_winter_ground(Graphics g2, int x, int y) {
+	if(map.is_raining) {
+		if(Math.random() < 0.5) 
+			g2.drawImage(SpriteLoader.loader.winter_snow, x * SPRITE_SIZE, y * SPRITE_SIZE,
+					SPRITE_SIZE, SPRITE_SIZE, this);
 		else
-			g2.drawImage(SpriteLoader.loader.summer_grass, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE, SPRITE_SIZE,
-					this);
-	}
+			g2.drawImage(SpriteLoader.loader.winter_snow2, x * SPRITE_SIZE, y * SPRITE_SIZE,
+					SPRITE_SIZE, SPRITE_SIZE, this);
+		duree_pluie++;
+	}else
+	g2.drawImage(SpriteLoader.loader.snow, x * SPRITE_SIZE, y * SPRITE_SIZE,
+			SPRITE_SIZE, SPRITE_SIZE, this);
+}
 
-	private void draw_summer_corner_shore_A(Graphics g2, int x, int y) {
-		switch (map.select_corner_typeA(x, y)) {
-		case 0:
-			g2.drawImage(SpriteLoader.loader.sum_sc_top_right, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-					SPRITE_SIZE, this);
-			break;
-		case 1:
-			g2.drawImage(SpriteLoader.loader.sum_sc_bottom_right, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-					SPRITE_SIZE, this);
-			break;
-		case 2:
-			g2.drawImage(SpriteLoader.loader.sum_sc_bottom_left, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-					SPRITE_SIZE, this);
-			break;
-		case 3:
-			g2.drawImage(SpriteLoader.loader.sum_sc_top_left, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-					SPRITE_SIZE, this);
-			break;
-		}
-	}
-
-	private void draw_summer_corner_shore_B(Graphics g2, int x, int y) {
-		switch (map.select_corner_typeB(x, y)) {
-		case 0:
-			g2.drawImage(SpriteLoader.loader.sum_sc_bottom_right_B, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-					SPRITE_SIZE, this);
-			break;
-		case 1:
-			g2.drawImage(SpriteLoader.loader.sum_sc_top_right_B, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-					SPRITE_SIZE, this);
-			break;
-		case 2:
-			g2.drawImage(SpriteLoader.loader.sum_sc_bottom_left_B, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-					SPRITE_SIZE, this);
-			break;
-		case 3:
-			g2.drawImage(SpriteLoader.loader.sum_sc_top_left_B, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-					SPRITE_SIZE, this);
-			break;
-		}
-	}
-	/////////////////////////////////////////////////////////////////////////
-	//// FALL TEXTURES /////
-	/////////////////////////////////////////////////////////////////////////
-
-	private void drawMapTextureFall(Graphics2D g2) {
-
-		for (int x = 0; x < map.getMapTexture().length; x++) {
-			for (int y = 0; y < map.getMapTexture()[0].length; y++) {
-				switch (map.getMapTexture()[x][y]) {
-				case MapTextureID.GROUND:
-					if (map.getMapTexture()[x][y] == MapTextureID.WATER) {
-						g2.drawImage(SpriteLoader.loader.water, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-								SPRITE_SIZE, this);
-					} else {
-						if (map.is_corner_B(x, y))
-							draw_fall_corner_shore_B(g2, x, y);
-						else if (map.is_corner_A(x, y))
-							draw_fall_corner_shore_A(g2, x, y);
-						else
-							draw_fall_ground(g2, x, y);
-					}
-
-					break;
-				case MapTextureID.WATER:
-					if (map.is_raining) {
-						if (map.mapAltitude[x][y] < -25 + map.hauteur_pluie) {
-							if (Math.random() < 0.5)
-								g2.drawImage(SpriteLoader.loader.deep_water_rain1, x * SPRITE_SIZE, y * SPRITE_SIZE,
-										SPRITE_SIZE, SPRITE_SIZE, this);
-							else
-								g2.drawImage(SpriteLoader.loader.deep_water_rain2, x * SPRITE_SIZE, y * SPRITE_SIZE,
-										SPRITE_SIZE, SPRITE_SIZE, this);
-						} else {
-							if (Math.random() < 0.5)
-								g2.drawImage(SpriteLoader.loader.water_rain1, x * SPRITE_SIZE, y * SPRITE_SIZE,
-										SPRITE_SIZE, SPRITE_SIZE, this);
-							else
-								g2.drawImage(SpriteLoader.loader.water_rain2, x * SPRITE_SIZE, y * SPRITE_SIZE,
-										SPRITE_SIZE, SPRITE_SIZE, this);
-						}
-
-					} else {
-						if (map.mapAltitude[x][y] < -25) {
-							if (Math.random() < 0.5)
-								g2.drawImage(SpriteLoader.loader.deep_water1, x * SPRITE_SIZE, y * SPRITE_SIZE,
-										SPRITE_SIZE, SPRITE_SIZE, this);
-							else
-								g2.drawImage(SpriteLoader.loader.deep_water2, x * SPRITE_SIZE, y * SPRITE_SIZE,
-										SPRITE_SIZE, SPRITE_SIZE, this);
-						} else {
-							if (Math.random() < 0.5)
-								g2.drawImage(SpriteLoader.loader.water1, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-										SPRITE_SIZE, this);
-							else
-								g2.drawImage(SpriteLoader.loader.water2, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-										SPRITE_SIZE, this);
-						}
-					}
-
-					break;
-
-				case MapTextureID.MOUNTAIN:
-					if (map.getAltitude(x, y) < 10) {
-						g2.setColor(Color.decode("#6e3300"));
-						g2.fillRect(x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE, SPRITE_SIZE);
-					} else if (map.getAltitude(x, y) < 17 && map.getAltitude(x, y) >= 10) {
-						g2.setColor(Color.decode("#582900"));
-						g2.fillRect(x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE, SPRITE_SIZE);
-					} else {
-						g2.setColor(Color.decode("#462100"));
-						g2.fillRect(x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE, SPRITE_SIZE);
-					}
-					break;
-				case MapTextureID.LAVA:
-					if (map.lave_coule)
-						g2.drawImage(SpriteLoader.loader.lava, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-								SPRITE_SIZE, this);
-					else
-						g2.drawImage(SpriteLoader.loader.cold_lava, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-								SPRITE_SIZE, this);
-					break;
-				case MapTextureID.CRATERE:
-					g2.drawImage(SpriteLoader.loader.cratere, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-							SPRITE_SIZE, this);
-					break;
-				case MapTextureID.COLD_LAVA:
-					g2.drawImage(SpriteLoader.loader.cold_lava, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-							SPRITE_SIZE, this);
-					break;
-				}
-			}
-		}
-	}
-
-	private void draw_fall_ground(Graphics g2, int x, int y) {
-		if (map.getTextureLeft(x, y) == MapTextureID.WATER)
-			g2.drawImage(SpriteLoader.loader.fall_shore_down, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-					SPRITE_SIZE, this);
-		else if (map.getTextureRight(x, y) == MapTextureID.WATER)
-			g2.drawImage(SpriteLoader.loader.fall_shore_up, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE, SPRITE_SIZE,
-					this);
-		else if (map.getTextureDown(x, y) == MapTextureID.WATER)
-			g2.drawImage(SpriteLoader.loader.fall_shore_left, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-					SPRITE_SIZE, this);
-		else if (map.getTextureUp(x, y) == MapTextureID.WATER)
-			g2.drawImage(SpriteLoader.loader.fall_shore_right, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-					SPRITE_SIZE, this);
-		else
-			g2.drawImage(SpriteLoader.loader.fall_grass, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE, SPRITE_SIZE,
-					this);
-	}
-
-	private void draw_fall_corner_shore_A(Graphics g2, int x, int y) {
-		switch (map.select_corner_typeA(x, y)) {
-		case 0:
-			g2.drawImage(SpriteLoader.loader.fsc_top_right, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE, SPRITE_SIZE,
-					this);
-			break;
-		case 1:
-			g2.drawImage(SpriteLoader.loader.fsc_top_left, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE, SPRITE_SIZE,
-					this);
-			break;
-		case 2:
-			g2.drawImage(SpriteLoader.loader.fsc_bottom_left, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-					SPRITE_SIZE, this);
-			break;
-		case 3:
-			g2.drawImage(SpriteLoader.loader.fsc_bottom_right, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-					SPRITE_SIZE, this);
-			break;
-		}
-	}
-
-	private void draw_fall_corner_shore_B(Graphics g2, int x, int y) {
-		switch (map.select_corner_typeB(x, y)) {
-		case 0:
-			g2.drawImage(SpriteLoader.loader.fsc_top_left_B, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE, SPRITE_SIZE,
-					this);
-			break;
-		case 1:
-			g2.drawImage(SpriteLoader.loader.fsc_top_right_B, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-					SPRITE_SIZE, this);
-			break;
-		case 2:
-			g2.drawImage(SpriteLoader.loader.fsc_bottom_left_B, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-					SPRITE_SIZE, this);
-			break;
-		case 3:
-			g2.drawImage(SpriteLoader.loader.fsc_bottom_right_B, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-					SPRITE_SIZE, this);
-			break;
-		}
-	}
-
-	/////////////////////////////////////////////////////////////////////////
-	//// WINTER TEXTURES /////
-	/////////////////////////////////////////////////////////////////////////
-
-	private void drawMapTextureWinter(Graphics2D g2) {
-
-		for (int x = 0; x < map.getMapTexture().length; x++) {
-			for (int y = 0; y < map.getMapTexture()[0].length; y++) {
-				switch (map.getMapTexture()[x][y]) {
-				case MapTextureID.GROUND:
-					if (map.getMapTexture()[x][y] == MapTextureID.WATER) {
-						g2.drawImage(SpriteLoader.loader.water, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-								SPRITE_SIZE, this);
-					} else {
-						if (map.is_corner_B(x, y))
-							draw_winter_corner_shore_B(g2, x, y);
-						else if (map.is_corner_A(x, y))
-							draw_winter_corner_shore_A(g2, x, y);
-						else
-							draw_winter_ground(g2, x, y);
-					}
-					break;
-				case MapTextureID.WATER:
-					g2.drawImage(SpriteLoader.loader.ice, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE, SPRITE_SIZE,
-							this);
-					break;
-				case MapTextureID.MOUNTAIN:
-					if (map.getAltitude(x, y) < 10) {
-						g2.setColor(Color.decode("#6e3300"));
-						g2.fillRect(x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE, SPRITE_SIZE);
-					} else if (map.getAltitude(x, y) < 17 && map.getAltitude(x, y) >= 10) {
-						g2.setColor(Color.decode("#582900"));
-						g2.fillRect(x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE, SPRITE_SIZE);
-					} else {
-						g2.setColor(Color.decode("#462100"));
-						g2.fillRect(x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE, SPRITE_SIZE);
-					}
-					break;
-				case MapTextureID.LAVA:
-					if (map.lave_coule)
-						g2.drawImage(SpriteLoader.loader.lava, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-								SPRITE_SIZE, this);
-					else
-						g2.drawImage(SpriteLoader.loader.cold_lava, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-								SPRITE_SIZE, this);
-					break;
-				case MapTextureID.CRATERE:
-					g2.drawImage(SpriteLoader.loader.cratere, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-							SPRITE_SIZE, this);
-					break;
-				case MapTextureID.COLD_LAVA:
-					g2.drawImage(SpriteLoader.loader.cold_lava, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-							SPRITE_SIZE, this);
-					break;
-
-				}
-			}
-		}
-	}
-
-	private void draw_winter_corner_shore_B(Graphics g2, int x, int y) {
-		switch (map.select_corner_typeB(x, y)) {
-		case 0:
-			g2.drawImage(SpriteLoader.loader.wsc_bottom_right_B, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-					SPRITE_SIZE, this);
-			break;
-		case 1:
-			g2.drawImage(SpriteLoader.loader.wsc_top_right_B, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-					SPRITE_SIZE, this);
-			break;
-		case 2:
-			g2.drawImage(SpriteLoader.loader.wsc_bottom_left_B, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-					SPRITE_SIZE, this);
-			break;
-		case 3:
-			g2.drawImage(SpriteLoader.loader.wsc_top_left_B, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE, SPRITE_SIZE,
-					this);
-			break;
-		}
-	}
-
-	private void draw_winter_corner_shore_A(Graphics g2, int x, int y) {
-		switch (map.select_corner_typeA(x, y)) {
-		case 0:
-			g2.drawImage(SpriteLoader.loader.wsc_top_right, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE, SPRITE_SIZE,
-					this);
-			break;
-		case 1:
-			g2.drawImage(SpriteLoader.loader.wsc_bottom_right, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-					SPRITE_SIZE, this);
-			break;
-		case 2:
-			g2.drawImage(SpriteLoader.loader.wsc_bottom_left, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-					SPRITE_SIZE, this);
-			break;
-		case 3:
-			g2.drawImage(SpriteLoader.loader.wsc_top_left, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE, SPRITE_SIZE,
-					this);
-			break;
-		}
-	}
-
-	private void draw_winter_ground(Graphics g2, int x, int y) {
-		if (map.getMapTexture()[(x + 1 + map.getHeight()) % map.getHeight()][y] == MapTextureID.WATER)
-			g2.drawImage(SpriteLoader.loader.winter_shore_left, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-					SPRITE_SIZE, this);
-		else if (map.getMapTexture()[(x - 1 + map.getHeight()) % map.getHeight()][y] == MapTextureID.WATER)
-			g2.drawImage(SpriteLoader.loader.winter_shore_right, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-					SPRITE_SIZE, this);
-		else if (map.getMapTexture()[x][(y - 1 + map.getWidth()) % map.getWidth()] == MapTextureID.WATER)
-			g2.drawImage(SpriteLoader.loader.winter_shore_down, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-					SPRITE_SIZE, this);
-		else if (map.getMapTexture()[x][(y + 1 + map.getWidth()) % map.getWidth()] == MapTextureID.WATER)
-			g2.drawImage(SpriteLoader.loader.winter_shore_up, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
-					SPRITE_SIZE, this);
-		else
-			g2.drawImage(SpriteLoader.loader.snow, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE, SPRITE_SIZE, this);
-	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1094,33 +755,25 @@ public class Ecosystem extends JPanel implements KeyListener {
 					drawPlayer(g2, (Player) a, a.pos_direction.x, a.pos_direction.y);
 				}
 				if (a instanceof Healer) {
-
+			
 					g2.setColor(Color.BLUE);
-					g2.fillRect(a.cur_pos.x * this.SPRITE_SIZE, this.SPRITE_SIZE * a.cur_pos.y, this.SPRITE_SIZE,
-							this.SPRITE_SIZE);
-
+					g2.fillRect(a.cur_pos.x * Ecosystem.SPRITE_SIZE , Ecosystem.SPRITE_SIZE * a.cur_pos.y, Ecosystem.SPRITE_SIZE, Ecosystem.SPRITE_SIZE);
+			
 				}
 				if (a instanceof Mage) {
-
+					
 					g2.setColor(Color.RED);
-					g2.fillRect(this.SPRITE_SIZE * a.cur_pos.x, this.SPRITE_SIZE * a.cur_pos.y, this.SPRITE_SIZE,
-							this.SPRITE_SIZE);
+					g2.fillRect( Ecosystem.SPRITE_SIZE * a.cur_pos.x,Ecosystem.SPRITE_SIZE *  a.cur_pos.y, Ecosystem.SPRITE_SIZE, Ecosystem.SPRITE_SIZE);
 				}
 				if (a instanceof Robot) {
-					drawRobot(g2, (Robot) a, Ecosystem.SPRITE_SIZE * 10);
+					drawRobotPortal(g2, (Robot) a, Ecosystem.SPRITE_SIZE * 4);
 				}
 
-				if (a instanceof Robot) {
-					drawNameBoss(g2, a, 10);
-				} else {
+				if (a instanceof MiniRobot)
 					drawName(g2, a);
-				}
 
-				if (a instanceof Robot) {
-					drawHealthBarBoss(g2, a, 10);
-				} else {
+				if (a instanceof MiniRobot) 
 					drawHealthBar(g2, a);
-				}
 			}
 		}
 
@@ -1137,7 +790,7 @@ public class Ecosystem extends JPanel implements KeyListener {
 
 	}
 
-	private void drawRobot(Graphics2D g2, Robot robot, int taille) {
+	private void drawRobotPortal(Graphics2D g2, Robot robot, int taille) {
 
 		g2.drawImage(SpriteLoader.loader.getRobot(), (robot.cur_pos.x * Ecosystem.SPRITE_SIZE - taille / 2 + 1),
 				(robot.cur_pos.y * Ecosystem.SPRITE_SIZE - taille / 2), taille, taille, this);
@@ -1146,7 +799,7 @@ public class Ecosystem extends JPanel implements KeyListener {
 
 	private void drawMiniRobot(Graphics2D g2, MiniRobot minirobot) {
 
-		g2.drawImage(SpriteLoader.loader.getRobot(),
+		g2.drawImage(SpriteLoader.loader.mini_robot,
 				(minirobot.cur_pos.x * Ecosystem.SPRITE_SIZE + minirobot.pos_offset.x + Ecosystem.P_WIDTH)
 						% Ecosystem.P_WIDTH,
 				(minirobot.cur_pos.y * Ecosystem.SPRITE_SIZE + minirobot.pos_offset.y + Ecosystem.P_HEIGHT)
@@ -1154,37 +807,7 @@ public class Ecosystem extends JPanel implements KeyListener {
 				Ecosystem.SPRITE_SIZE, Ecosystem.SPRITE_SIZE, this);
 
 	}
-
-	/*
-	 * DRAWING THE ATTRIBUTES OF THE AGENTS
-	 */
-
-	private void drawNameBoss(Graphics2D g2, Agent player, int taille) {
-		g2.setColor(Color.BLUE);
-		g2.setFont(new Font("TimesRoman", Font.PLAIN, Ecosystem.SPRITE_SIZE * taille / 4));
-		g2.drawString(player.name + " lv " + player.level,
-				Ecosystem.SPRITE_SIZE * player.cur_pos.x - Ecosystem.SPRITE_SIZE * taille / 2,
-				Ecosystem.SPRITE_SIZE * player.cur_pos.y - Ecosystem.SPRITE_SIZE * taille / 2);
-
-	}
-
-	private void drawHealthBarBoss(Graphics2D g2, Agent player, int taille) {
-
-		g2.setColor(Color.RED);
-		if (player.life > 0 && player.life <= player.max_life) {
-			g2.fillRect(Ecosystem.SPRITE_SIZE * player.cur_pos.x - Ecosystem.SPRITE_SIZE * taille / 2,
-					Ecosystem.SPRITE_SIZE * player.cur_pos.y - Ecosystem.SPRITE_SIZE * taille / 2,
-					(int) (((double) player.life / (double) player.max_life) * Ecosystem.SPRITE_SIZE * taille),
-					Ecosystem.SPRITE_SIZE);
-		}
-		g2.setColor(Color.BLACK);
-		g2.drawRect(Ecosystem.SPRITE_SIZE * player.cur_pos.x - Ecosystem.SPRITE_SIZE * taille / 2,
-				Ecosystem.SPRITE_SIZE * player.cur_pos.y - Ecosystem.SPRITE_SIZE * taille / 2,
-				(int) (((double) player.life / (double) player.max_life) * Ecosystem.SPRITE_SIZE * taille),
-				Ecosystem.SPRITE_SIZE);
-
-	}
-
+	
 	private synchronized void drawHealthBar(Graphics2D g2, Agent player) {
 
 		g2.setColor(Color.RED);
@@ -1210,7 +833,7 @@ public class Ecosystem extends JPanel implements KeyListener {
 
 	}
 
-	// update the agents :
+		// update the agents :
 	private synchronized void updateAgents() {
 
 		for (Agent a : Ecosystem.agents) {
@@ -1328,7 +951,13 @@ public class Ecosystem extends JPanel implements KeyListener {
 			key_path = !this.key_path;
 		else if (e.getKeyCode() == KeyEvent.VK_R)
 			this.key_agents = !this.key_agents;
-
+		else if(e.getKeyCode() == KeyEvent.VK_N) {
+			Ecosystem.map = new WorldMap();
+			season = (int)(Math.random()*4);
+			initAgents();
+		}
+		else if(e.getKeyCode() == KeyEvent.VK_C)
+			System.exit(1);
 	}
 
 	@Override
