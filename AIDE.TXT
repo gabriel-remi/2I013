@@ -19,6 +19,8 @@ TOUCHES :
  N : Creation d'un nouveau monde
  C : Sortie du programme
  T : Affichage de mouvements fluides
+ molette de la souris : Zoopm
+ click gache de la souris puis bouger : bouger dans le monde
  -> : La flèche droite du clavier numérique permet de déccelerer
  <- :  La flèche gauche du clavier numérique permet d'accelerer
 
