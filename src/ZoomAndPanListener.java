@@ -65,12 +65,12 @@ public class ZoomAndPanListener implements MouseListener, MouseMotionListener, M
     }
 
     public void mouseWheelMoved(MouseWheelEvent e) {
-//        System.out.println("============= Zoom camera ============");
+//        
         zoomCamera(e);
     }
 
     private void moveCamera(MouseEvent e) {
-//        System.out.println("============= Move camera ============");
+//        
         try {
             dragEndScreen = e.getPoint();
             Point2D.Float dragStart = transformPoint(dragStartScreen);
@@ -116,10 +116,10 @@ public class ZoomAndPanListener implements MouseListener, MouseMotionListener, M
     }
 
     private Point2D.Float transformPoint(Point p1) throws NoninvertibleTransformException {
-//        System.out.println("Model -> Screen Transformation:");
+//        
 //        showMatrix(coordTransform);
         AffineTransform inverse = coordTransform.createInverse();
-//        System.out.println("Screen -> Model Transformation:");
+//        
 //        showMatrix(inverse);
 
         Point2D.Float p2 = new Point2D.Float();

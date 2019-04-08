@@ -9,7 +9,7 @@ public class Player extends Agent {
 	public Integer damageDealt = null;
 	public boolean miss = false;
 	public Agent target = null;
-	private int earnedPoint = 501;
+	private int earnedPoint = 0;
 
 	public Player(int x, int y) {
 		super(x, y, 100, "Gabriel");
@@ -22,7 +22,7 @@ public class Player extends Agent {
 	}
 
 	public void update() {
-		// System.out.println(this);
+		// 
 		this.damageDealt = null;
 		this.target = null;
 		this.miss = false;
@@ -38,28 +38,31 @@ public class Player extends Agent {
 			if (canDie()) {
 				this.die();
 			} else {
-				if(earnedPoint > 600 && numberHealer() < 1) {
+				if(earnedPoint > 20 && numberHealer() < 1) {
 					Ecosystem.tmp.add(new Healer(this.cur_pos.x, this.cur_pos.y, 999999, "Healer", this));
-					this.earnedPoint =0;
+					this.earnedPoint -=20;
 				}
-				if(earnedPoint > 500 && numberMage() < 1) {
+				if(earnedPoint > 50 && numberMage() < 1) {
 					Ecosystem.tmp.add(new Mage(this.cur_pos.x, this.cur_pos.y, 999999, "Mage", this));
-					this.earnedPoint = 0;
+					this.earnedPoint -=  50;
 				}
 				if (this.in(Zone.healingZone) && this.life < this.max_life) {
 					regenLife();
 						MiniRobot mini_robot = this.closestMiniRobot();
-						this.attack(mini_robot);
-						System.out.println(mini_robot);
+						if(mini_robot != null) {
+							this.attack(mini_robot);
+						
+					
 						if (this.nextTo(mini_robot)) {
 							this.stayAtCurrentPosition();
 							this.face(mini_robot);
 							
-							System.out.println("attacking while zone");
+							
 							if (mini_robot.life <= 0) {
 								earnPoint();
-								this.level++;
+								this.levelUp();
 							}
+						}
 						}
 
 					
@@ -89,7 +92,7 @@ public class Player extends Agent {
 
 								if (mini_robot.life <= 0) {
 									this.earnPoint();
-									this.level++;
+									this.levelUp();;
 								}
 							} else {
 
@@ -187,6 +190,16 @@ public class Player extends Agent {
 
 			}
 		}
+	}
+
+	private void levelUp() {
+		this.level++;
+		this.attackPower+=5;
+		this.defensePower+=5;
+		this.max_life+=10;
+		this.life=this.max_life;
+		
+		
 	}
 
 	private void earnPoint() {
@@ -345,7 +358,7 @@ public class Player extends Agent {
 		return this.life < -10;
 	}
 
-	private boolean isDead() {
+	public boolean isDead() {
 
 		return this.life <= 0;
 	}

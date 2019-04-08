@@ -16,7 +16,7 @@ public class Healer extends Agent {
 			}
 			
 		}
-		if(this.distance(this.cur_pos.x, this.cur_pos.y, player.cur_pos.x, player.cur_pos.y) < 10) {
+		if(!this.player.isDead() && this.distance(this.cur_pos.x, this.cur_pos.y, player.cur_pos.x, player.cur_pos.y) < 10) {
 			this.player.life = this.player.life + 2;
 			if(this.player.life > this.player.max_life) {
 				this.player.life = this.player.max_life;

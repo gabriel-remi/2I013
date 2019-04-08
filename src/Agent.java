@@ -41,10 +41,11 @@ public class Agent {
 				}
 			}
 		}
+		/*
 		for(Agent agent: Ecosystem.agents) {
 			map[agent.cur_pos.x][agent.cur_pos.y] = OBSTACLE;
 		}
-		
+		*/
 		map[cur_pos.x][cur_pos.y] = AGENT;
 		
 		map[target.x][target.y] = GOAL;

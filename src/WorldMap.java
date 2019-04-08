@@ -298,6 +298,7 @@ public class WorldMap {
 		return updatedState;
 	}
 
+
 	private boolean agentAt(int x, int y) {
 		for (Iterator iterator = Ecosystem.agents.iterator(); iterator.hasNext();) {
 			Agent agent = (Agent) iterator.next();
@@ -694,7 +695,7 @@ public class WorldMap {
 		for (int x = 0; x < mapWidth; x++) { 
 			for (int y = 0; y < mapHeight; y++)
 			  System.out.print(String.format("%.2f ", mapAltitude[x][y]));
-			System.out.println();
+			
 		}
 	}
 }

@@ -47,6 +47,7 @@ public class Ecosystem extends JPanel implements KeyListener {
 	// agents
 	public static ArrayList<Agent> agents;
 	public static ArrayList<Agent> tmp;
+	public static ArrayList<Elementaire> elements;
 
 	public Ecosystem() {
 		map = new WorldMap();
@@ -54,11 +55,29 @@ public class Ecosystem extends JPanel implements KeyListener {
 		setFocusable(true);
 		season = (int) (Math.random() * 4);
 		initAgents();
+		initElementaires();
 		initPanel();
 		initFrame();
 
 		key_zone = key_season = key_aggro = key_lava = key_rain = false;
 		this.key_agents = true;
+	}
+
+	private void initElementaires() {
+		Ecosystem.elements = new ArrayList<Elementaire>();
+		Ecosystem.elements.add(new Elementaire(1, new Position(0, 0)));
+		Ecosystem.elements.add(new Elementaire(1, new Position(0, 0)));
+		Ecosystem.elements.add(new Elementaire(1, new Position(0, 0)));
+		Ecosystem.elements.add(new Elementaire(1, new Position(0, 0)));
+
+		Ecosystem.elements.add(new Elementaire(2, new Position(0, 0)));
+		Ecosystem.elements.add(new Elementaire(2, new Position(0, 0)));
+		Ecosystem.elements.add(new Elementaire(2, new Position(0, 0)));
+
+		Ecosystem.elements.add(new Elementaire(3, new Position(0, 0)));
+		Ecosystem.elements.add(new Elementaire(3, new Position(0, 0)));
+		Ecosystem.elements.add(new Elementaire(3, new Position(0, 0)));
+
 	}
 
 	private void initAgents() {
@@ -188,6 +207,7 @@ public class Ecosystem extends JPanel implements KeyListener {
 		updateSeason();
 		map.update();
 		updateAgents();
+		updateElements();
 
 	}
 
@@ -208,19 +228,49 @@ public class Ecosystem extends JPanel implements KeyListener {
 		Toolkit.getDefaultToolkit().sync();
 		if (this.key_agents) {
 			drawAgents(g2);
+			Toolkit.getDefaultToolkit().sync();
 		}
 		if (key_path) {
 			drawPath(g2);
 		}
-		;
+		Toolkit.getDefaultToolkit().sync();
+		drawElements(g2);
+		Toolkit.getDefaultToolkit().sync();
 		drawagentSkills(g2);
+		Toolkit.getDefaultToolkit().sync();
+
 		drawDamage(g2);
 
 		Toolkit.getDefaultToolkit().sync();
 
 	}
 
-	private void drawDamage(Graphics2D g2) {
+	private synchronized void drawElements(Graphics2D g2) {
+		for (Elementaire element : elements) {
+			int x = element.p.x;
+			int y = element.p.y;
+			switch (element.type) {
+			case 1:
+				g2.setColor(new Color(255,0,0, 130));
+
+				break;
+			case 2:
+				g2.setColor(new Color(0,0,255, 130));
+
+				break;
+			case 3:
+				g2.setColor(new Color(0,255,0, 130));
+				break;
+			default:
+				break;
+
+			}
+			g2.fillOval(x * this.SPRITE_SIZE, y * this.SPRITE_SIZE, this.SPRITE_SIZE, this.SPRITE_SIZE);
+		}
+
+	}
+
+	private synchronized void drawDamage(Graphics2D g2) {
 		for (Agent agent : this.agents) {
 			if (agent instanceof Player && ((Player) agent).damageDealt != null) {
 				g2.setColor(new Color(255, 0, 120));
@@ -242,7 +292,7 @@ public class Ecosystem extends JPanel implements KeyListener {
 
 	}
 
-	private void drawagentSkills(Graphics2D g2) {
+	private synchronized void drawagentSkills(Graphics2D g2) {
 		for (Agent agent : this.agents) {
 			if (agent instanceof Robot && ((Robot) agent).laserBeam) {
 				g2.setColor(new Color(255, 0, 0, 180));
@@ -1044,15 +1094,17 @@ public class Ecosystem extends JPanel implements KeyListener {
 					drawPlayer(g2, (Player) a, a.pos_direction.x, a.pos_direction.y);
 				}
 				if (a instanceof Healer) {
-			
+
 					g2.setColor(Color.BLUE);
-					g2.fillRect(a.cur_pos.x * this.SPRITE_SIZE , this.SPRITE_SIZE * a.cur_pos.y, this.SPRITE_SIZE, this.SPRITE_SIZE);
-			
+					g2.fillRect(a.cur_pos.x * this.SPRITE_SIZE, this.SPRITE_SIZE * a.cur_pos.y, this.SPRITE_SIZE,
+							this.SPRITE_SIZE);
+
 				}
 				if (a instanceof Mage) {
-					
+
 					g2.setColor(Color.RED);
-					g2.fillRect( this.SPRITE_SIZE * a.cur_pos.x,this.SPRITE_SIZE *  a.cur_pos.y, this.SPRITE_SIZE, this.SPRITE_SIZE);
+					g2.fillRect(this.SPRITE_SIZE * a.cur_pos.x, this.SPRITE_SIZE * a.cur_pos.y, this.SPRITE_SIZE,
+							this.SPRITE_SIZE);
 				}
 				if (a instanceof Robot) {
 					drawRobot(g2, (Robot) a, Ecosystem.SPRITE_SIZE * 10);
@@ -1184,6 +1236,65 @@ public class Ecosystem extends JPanel implements KeyListener {
 		Ecosystem.agents.removeIf(a -> a instanceof MiniRobot && a.life <= 0);
 		Ecosystem.tmp.clear();
 
+	}
+
+	private void updateElements() {
+		elementsCreation();
+		for (Elementaire element : elements) {
+			element.update();
+		}
+		this.elements.removeIf(element -> element.energy == 0);
+
+	}
+
+	private void elementsCreation() {
+		int[] elementsNumber = getElementsNumber();
+		int created1=0;
+		int created2 = 0;
+		int created3 = 0;
+		for (int x = 0; x < map.getMapEntities().length; x++) {
+			for (int y = 0; y < map.getMapEntities()[0].length; y++) {
+				if (this.map.getMapEntities()[x][y] == MapEntitiesID.GREEN_TREE && elementsNumber[2] < 10 && created3 < 10) {
+					this.elements.add(new Elementaire(3, new Position(x, y)));
+					created3++;
+				}
+
+				if (this.map.getMapEntities()[x][y] == MapEntitiesID.BURNING_TREE && elementsNumber[0] < 10 && created1 < 10) {
+					this.elements.add(new Elementaire(1, new Position(x, y)));
+					created1++;
+				}
+
+				if ((this.map.getMapTexture()[x][y] == MapTextureID.LAVA
+						|| this.map.getMapTexture()[x][y] == MapTextureID.CRATERE) && elementsNumber[0] < 10 && created1 < 10) {
+					this.elements.add(new Elementaire(1, new Position(x, y)));
+					created1++;
+				}
+				if (this.map.getMapTexture()[x][y] == MapTextureID.WATER && elementsNumber[1] < 10 && created2 < 10) {
+					this.elements.add(new Elementaire(2, new Position(x, y)));
+					created2++;
+				}
+				
+			}
+
+		}
+
+	}
+
+	private int[] getElementsNumber() {
+		int[] tmp = new int[3];
+		for (Elementaire element : elements) {
+			if (element.type == 1) {
+				tmp[0] = tmp[0] + 1;
+			}
+			if (element.type == 2) {
+				tmp[1] = tmp[1] + 1;
+			}
+			if (element.type == 3) {
+				tmp[2] = tmp[2] + 1;
+			}
+
+		}
+		return tmp;
 	}
 
 	@Override

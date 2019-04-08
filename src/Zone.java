@@ -42,7 +42,7 @@ public class Zone extends Rectangle{
 		ArrayList<Position> acces = new ArrayList<Position>();
 		for (int i = this.x; i < this.width; i++) {
 			for (int j = this.y; j < this.height; j++) {
-				if(Ecosystem.map.getMapEntities()[i][j] == MapEntitiesID.NOTHING && Ecosystem.map.getMapTexture()[i][j] == MapTextureID.GROUND) {
+				if(Ecosystem.map.getMapEntities()[(i + Ecosystem.mapWidth)%Ecosystem.mapWidth][(j + Ecosystem.mapHeight)%Ecosystem.mapHeight] == MapEntitiesID.NOTHING && Ecosystem.map.getMapTexture()[(i + Ecosystem.mapWidth)%Ecosystem.mapWidth][(j + Ecosystem.mapHeight)%Ecosystem.mapHeight] == MapTextureID.GROUND) {
 					acces.add(new Position(i, j));
 				}
 			}

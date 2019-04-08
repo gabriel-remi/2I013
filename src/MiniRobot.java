@@ -16,22 +16,22 @@ public class MiniRobot extends Agent {
 	public void update() {
 
 		if (isDead()) {
-			// System.out.println("MiniRobot is Dead");
+			// 
 
 		} else {
 
 			if (canDie()) {
-				// System.out.println("MiniRobot is dying because of water or lava");
+				// 
 				this.die();
 			} else {
 
 				if (this.detectPlayer()) {
 
-					// System.out.println("MiniRobot detected a player");
+					// 
 					Player player = this.getDetectedPlayer();
 
 					if (this.nextTo(player)) {
-						// System.out.println("MiniRobot is next to a player");
+						// 
 						this.stayAtCurrentPosition();
 						this.attack(player);
 
@@ -40,7 +40,7 @@ public class MiniRobot extends Agent {
 						this.path = getPath(this.cur_pos, player.cur_pos);
 						
 						if (existPathTo(player.cur_pos)) {
-							// System.out.println("MiniRobot is walking towards a player");
+							// 
 							this.walkTo(player);
 
 						} else {
@@ -50,11 +50,11 @@ public class MiniRobot extends Agent {
 								if (legalPosition.size() > 0) {
 									random_pos = legalPosition.remove((int) (legalPosition.size() * Math.random()));
 									if (existPathTo(random_pos)) {
-										// System.out.println("MiniRobot walks toward a target");
+										// 
 										this.walkTo(random_pos);
 
 									} else {
-										// System.out.println("MiniRobot walks randomly");
+										// 
 										// this.walkRandomly();
 
 									}
@@ -76,11 +76,11 @@ public class MiniRobot extends Agent {
 						if (legalPosition.size() > 0) {
 							random_pos = legalPosition.remove((int) (legalPosition.size() * Math.random()));
 							if (existPathTo(random_pos)) {
-								// System.out.println("MiniRobot walks toward a target");
+								// 
 								this.walkTo(random_pos);
 
 							} else {
-								// System.out.println("MiniRobot walks randomly");
+								// 
 								// this.walkRandomly();
 
 							}
@@ -89,7 +89,7 @@ public class MiniRobot extends Agent {
 						}
 						timeSearch = 30;
 					}
-					if (existPathTo(random_pos)) {
+					if (this.random_pos != null && existPathTo(random_pos)) {
 						timeSearch--;
 						this.walkTo(random_pos);
 
