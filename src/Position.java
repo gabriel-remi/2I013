@@ -58,22 +58,22 @@ public class Position {
 	}
 
 	public Position getAbove() {
-		// TODO Auto-generated method stub
+		
 		return new Position(this.x, (this.y - 1 + Ecosystem.mapHeight) %Ecosystem.mapHeight);
 	}
 
 	public Position getDown() {
-		// TODO Auto-generated method stub
+		
 		return new Position(this.x, (this.y + 1 + Ecosystem.mapHeight) %Ecosystem.mapHeight);
 	}
 
 	public Position getLeft() {
-		// TODO Auto-generated method stub
+
 		return new Position((this.x  - 1 + Ecosystem.mapWidth) % Ecosystem.mapWidth, this.y);
 	}
 
 	public Position getRight() {
-		// TODO Auto-generated method stub
+
 		return new Position((this.x  + 1 + Ecosystem.mapWidth) % Ecosystem.mapWidth, this.y);
 	}
 	

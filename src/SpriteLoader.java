@@ -170,7 +170,7 @@ public class SpriteLoader {
 	}
 
 	public Image getPlayer(int i, int j) {
-		// TODO Auto-generated method stub
+
 		if (i == 0) {
 			if (j == 1) {
 				return player[1];

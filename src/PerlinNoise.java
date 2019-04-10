@@ -1,6 +1,3 @@
-import java.util.Random;
-import java.util.concurrent.ThreadLocalRandom;
-
 import javax.swing.JPanel;
 
 public class PerlinNoise extends JPanel{

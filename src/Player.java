@@ -402,6 +402,7 @@ public class Player extends Agent {
 
 
 	private void attack(MiniRobot MiniRobot) {
+	this.target = MiniRobot;
 		if (this.precision > Math.random()) {
 			if (this.criticalRate > Math.random()) {
 				this.damageDealt = (int) (this.attackPower + this.attackPower * this.criticalDamage
@@ -414,14 +415,14 @@ public class Player extends Agent {
 			if (this.damageDealt < 0) {
 				this.damageDealt = 0;
 			}
-			this.target = MiniRobot;
+			
 			MiniRobot.life = MiniRobot.life - this.damageDealt;
 			if (MiniRobot.life < 0) {
 				MiniRobot.life = 0;
 			}
 		} else {
 			this.miss = true;
-			this.target = MiniRobot;
+			
 		}
 
 	}

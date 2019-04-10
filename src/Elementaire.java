@@ -128,7 +128,7 @@ public class Elementaire {
 	}
 
 	private int moduloWidth(int i) {
-		// TODO Auto-generated method stub
+
 		return (i + Ecosystem.mapWidth)%Ecosystem.mapWidth;
 	}
 	

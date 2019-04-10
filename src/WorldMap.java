@@ -1,5 +1,4 @@
 import java.util.ArrayList;
-import java.util.Iterator;
 
 public class WorldMap {
 
@@ -374,13 +373,13 @@ public class WorldMap {
 	}
 
 	private boolean agentAt(int x, int y) {
-		for (Iterator iterator = Ecosystem.agents.iterator(); iterator.hasNext();) {
-			Agent agent = (Agent) iterator.next();
+		for(int i = 0; i < Ecosystem.agents.size(); i++) {
+			Agent agent =  Ecosystem.agents.get(i);
 			if(agent.cur_pos.equals(new Position(x, y))){
 				return true;
 			}
-			
 		}
+	
 		return false;
 	}
 

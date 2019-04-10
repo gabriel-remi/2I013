@@ -15,12 +15,12 @@ public class Zone extends Rectangle{
 	public boolean increaseTime = true;
 	public Zone(int x, int y, int width, int height) {
 		super(x, y, width, height);
-		// TODO Auto-generated constructor stub
+		
 	}
 
 	
 	public void updateAnimationTime() {
-		// TODO Auto-generated method stub
+
 		if(this.animationTime > 130) {
 			this.increaseTime = false;
 		}

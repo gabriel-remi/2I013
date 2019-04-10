@@ -9,7 +9,7 @@ public class Robot extends Agent {
 	public Agent laserTarget = null;
 
 	public Robot(int x, int y) {
-		// TODO Auto-generated constructor stub
+		
 		super(x, y, 10000, "Robot");
 		this.level = 99;
 
@@ -93,12 +93,12 @@ public class Robot extends Agent {
 	}
 
 	private void doNothing() {
-		// TODO Auto-generated method stub
+
 
 	}
 
 	private int distance(Robot robot, Player player) {
-		// TODO Auto-generated method stub
+
 		int map_x2 = robot.cur_pos.x;
 		int map_y2 = robot.cur_pos.y;
 		int map_x1 = player.cur_pos.x;

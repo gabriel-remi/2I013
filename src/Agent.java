@@ -1,5 +1,4 @@
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.LinkedList;
 
 public class Agent {
@@ -102,7 +101,7 @@ public class Agent {
 	
 	
 	public void clear() {
-		// TODO Auto-generated method stub
+		
 		for (int y = 0; y < map[0].length; y++) {
 			for (int x = 0; x < map.length; x++) {
 				visited[x][y] = false;
@@ -164,7 +163,7 @@ public class Agent {
 	}
 
 	protected int moduloHeight(int i) {
-		// TODO Auto-generated method stub
+	
 		return (i + Ecosystem.mapHeight) % Ecosystem.mapHeight;
 	}
 

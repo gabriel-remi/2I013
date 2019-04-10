@@ -5,7 +5,7 @@ public class Mage extends Agent {
 	public Mage(int x, int y, int max_life, String name, Player player) {
 		super(x, y, max_life, name);
 		this.player = player;
-		// TODO Auto-generated constructor stub
+		
 	}
 
 	public void update() {
