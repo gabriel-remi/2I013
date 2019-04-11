@@ -1,5 +1,4 @@
 import java.util.ArrayList;
-import java.util.Random;
 
 public class Player extends Agent {
 	public static Position revivingPosition;
@@ -314,7 +313,7 @@ public class Player extends Agent {
 		return this.life >= mini_robot.life / 2;
 	}
 
-	private MiniRobot getDetectedMiniRobot() {
+	public MiniRobot getDetectedMiniRobot() {
 		for (Agent agent : Ecosystem.agents) {
 			if (agent instanceof MiniRobot && agent.life > 0
 					&& distance(this, (MiniRobot) agent) <= this.detection_area) {
@@ -363,7 +362,7 @@ public class Player extends Agent {
 		return this.life <= 0;
 	}
 
-	private void doNothing() {
+	public void doNothing() {
 
 	}
 

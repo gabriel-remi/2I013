@@ -2,23 +2,24 @@ import java.util.ArrayList;
 
 public class WorldMap {
 
-	private int highest_pX;
-	private int highest_pY;
+	private int highest_pX;									//abscisse du point le plus haut de la carte
+	private int highest_pY;									//ordonnee du point le plus haut de la carte
 	
-	private int[][] mapTexture;
-	private int[][] nextMapTexture;
+	private int[][] mapTexture;								//matrice pour gerer les textures
+	private int[][] nextMapTexture;							//seconde matrice pour MAJ synchrones
 	
-	private int[][] mapEntities;
-	private int[][] nextMapEntities;
+	private int[][] mapEntities;							//matrice pour gerer les arbres
+	private int[][] nextMapEntities;						//seconde matrice pour MAJ synchrone
 	
-	public double[][] mapAltitude;
-	private int mapWidth, mapHeight;
+	public double[][] mapAltitude;							//matrice pour altitude
 	
-	public int cpt_lave, duree_lave;
-	public int cpt_pluie, cpt_evaporation;
-	public double hauteur_pluie, hauteur_neige = 0, nb_of_snow = 0;
-	public boolean is_raining, lave_coule;
-	public static final int LAVE_DROITE = 0, LAVE_BAS = 1, LAVE_GAUCHE = 2, LAVE_HAUT = 3;
+	private int mapWidth, mapHeight;						//toutes les cartes auront cette dimension
+	
+	private int cpt_lave, nb_of_snow;						//cpt_lave  pour rendre l'ecoulement de lave plus lent, nb_of_snow correspond au nb de cases enneigees dans la simulation
+	public int cpt_pluie, cpt_evaporation;					//duree de la pluie ou de l'abscence de pluie
+	public double hauteur_pluie, hauteur_neige;	
+	public boolean is_raining, lave_coule;	
+	public static final int LAVE_DROITE = 0, LAVE_BAS = 1, LAVE_GAUCHE = 2, LAVE_HAUT = 3;			//sert pour la direction de l'ecoulement
 	
 
 	public WorldMap() {
@@ -42,6 +43,8 @@ public class WorldMap {
 		is_raining = false;
 		cpt_pluie = cpt_evaporation = 0;
 		hauteur_pluie = 0;
+		hauteur_neige = 0;
+		nb_of_snow = 0;
 		initMapAltitude();
 		initMapTexture();
 		initMapEntities();
@@ -50,6 +53,7 @@ public class WorldMap {
 			 
 	public void initMapAltitude() {
 		double rand = Math.random() * 256;
+		
 		for (int x = 0; x < mapHeight; x++) {
 			for (int y = 0; y < mapWidth; y++)
 				mapAltitude[x][y] = PerlinNoise.noise(x + rand, y + rand, PerlinNoise.RESOLUTION)
@@ -63,16 +67,29 @@ public class WorldMap {
 				mapTexture[x][y] = getTexture(x, y);
 			}
 		}
-
-		
 		initialisationVolcan();
 	}
+
+	
+	
+	//renvoie l'indice de la texture correspondante en fonction de l'altitude de la case
+	public int getTexture(int x, int y) {
+		if (mapAltitude[x][y] < -15)
+			return MapTextureID.WATER;
+		else if (mapAltitude[x][y] >= -15 && mapAltitude[x][y] < 5) // -15 et 15
+			return MapTextureID.GROUND;
+		else
+			return MapTextureID.MOUNTAIN;
+	}
+	
 
 	@SuppressWarnings("unused")
 	private boolean surroundedByGround(int x, int y) {
 		return nb_of_ground_tiles_around(x,y) == 8;
 	}
 
+	
+	//pour chaque case, si la case est du sol, qu'il n'y a pas d'eau a cote et que la proba est respectee, mettre un arbre
 	public void initMapEntities() {
 		for (int x = 0; x < mapEntities.length; x++) {
 			for (int y = 0; y < mapEntities[0].length; y++) {
@@ -83,19 +100,10 @@ public class WorldMap {
 			}
 		}
 	}
-	
+		
 
-	public int getTexture(int x, int y) {
-		if (mapAltitude[x][y] < -15)
-			return MapTextureID.WATER;
-		else if (mapAltitude[x][y] >= -15 && mapAltitude[x][y] < 5) // -15 et 15
-			return MapTextureID.GROUND;
-		else
-			return MapTextureID.MOUNTAIN;
-	}
 	
-	
-
+	//cherche le point le plus haut de la carte et declare que la texture en cette position est un cratere
 	public void initialisationVolcan() {
 		double higherPoint = 0;
 		int pX = 0, pY = 0;
@@ -104,8 +112,8 @@ public class WorldMap {
 			for (int y = 0; y < mapHeight; y++) {
 				if (mapAltitude[x][y] > higherPoint) {
 					higherPoint = mapAltitude[x][y];
-					highest_pX = pX = x;
-					highest_pY = pY = y;
+					highest_pX = pX = x;					
+					highest_pY = pY = y;					
 				}
 
 			}
@@ -115,9 +123,33 @@ public class WorldMap {
 	
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// UPDATE METHODS
+	//													 UPDATE METHODS										////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// method used to update maps
+
+	//pour la methode update();	
+	
+	/* 1) on recopie toutes les textures dans sa matrice associee pour la MAJ
+	sauf pour les cases d'eau ou de glace
+		si on est en hiver : "public void frost(int x, int y);" concerne les cases d'eau uniquement et permet de geler l'eau et de la transformer en glace
+		si on n'est pas en hiver : "public void defrost(int x, int y)" concerne les cases de galce uniquement et permet de degeler la glace et la transformer en eau
+	ensuite on n'est pas en hiver, les cases de neige disparaissent et retournent*/
+	
+	/* 2) On verifie si il pleut ou non
+	 * 		si il pleut : snow() qui ne concerne que l'hiver
+	 * 					  pluie() sinon
+	 * 		si il ne pleut pas :
+	 * 					  faire evaporer l'eau de pluie*/
+	
+	/* 3) On traite le cas du volcan
+	 * 		si la coulee de lave est active: 
+	 *			ecoulement_lave();	*/
+	
+	/* 4) On recopie les valeurs des matrices intermediaires dans les bonnes matrices pour effectuer la MAJ de l'environnement*/
+	
+	
+	
+	
+	
 	public void update() {
 		
 		for(int x = 0; x < mapTexture.length; x++) {
@@ -156,13 +188,12 @@ public class WorldMap {
 				mapTexture[x][y] = nextMapTexture[x][y];
 			}
 		}
+		
 		for(int x = 0; x < mapTexture.length; x++) {
 			for(int y = 0; y < mapTexture[0].length; y++) {
 				if(lave_coule == false) {
 					if(nextMapTexture[x][y] == MapTextureID.LAVA)
 						mapTexture[x][y] = cooling_lava(x,y);
-					if(nextMapTexture[x][y] == MapTextureID.COLD_LAVA)
-						mapTexture[x][y] = cleaning_cold_lava(x,y);
 				}
 			}
 		}
@@ -246,19 +277,22 @@ public class WorldMap {
 	
 
 	public int cooling_lava(int x, int y) {
-		if(Math.random()<0.6 && (nb_of_ground_tiles_around(x,y) != 0 || nb_of_water_tiles_around(x,y) != 0 || nb_of_mountain_tiles_around(x,y) != 0 || nb_of_cold_lava_tiles_around(x,y) != 0))
+		if(Math.random()<0.6 && (nb_of_ground_tiles_around(x,y) != 0 || nb_of_water_tiles_around(x,y) != 0 || nb_of_mountain_tiles_around(x,y) != 0 || nb_of_cold_lava_tiles_around(x,y) != 0)) {
 			return MapTextureID.COLD_LAVA;
+		}
 		else return MapTextureID.LAVA;
 	}
 	
-	public int cleaning_cold_lava(int x, int y) {
-		if(lave_coule == false && cpt_pluie > 100 && Math.random()<0.2)
-			return getTexture(x,y);
-		else return MapTextureID.COLD_LAVA;
-	}
-	
-	
 		
+	public boolean is_there_lava() {
+		for(int x = 0; x < mapHeight; x++) {
+			for(int y = 0; y < mapWidth; y++) {
+				if(mapTexture[x][y] == MapTextureID.LAVA)
+					return true;
+			}
+		}
+		return false;
+	}
 	public void ecoulement_lave() {	
 	
 		if(lave_coule) {
@@ -278,38 +312,36 @@ public class WorldMap {
 									nextMapTexture[down][right] = MapTextureID.LAVA;
 								if(mapAltitude[x][right] < mapAltitude[x][y] && mapTexture[x][right] != MapTextureID.WATER)
 									nextMapTexture[x][right] = MapTextureID.LAVA;
+
 							}else if(rand == LAVE_BAS) {
 								if(mapAltitude[down][y] < mapAltitude[x][y] && mapTexture[down][y] != MapTextureID.WATER)
 									nextMapTexture[down][y] = MapTextureID.LAVA;
-								if(mapAltitude[down][left] < mapAltitude[x][y] && mapTexture[down][left] != MapTextureID.WATER)
+								if(mapAltitude[down][left] < mapAltitude[x][y] && mapTexture[down][left] != MapTextureID.WATER) 
 									nextMapTexture[down][left] = MapTextureID.LAVA;
-								if(mapAltitude[down][right] < mapAltitude[x][y] && mapTexture[down][right] != MapTextureID.WATER)
+								if(mapAltitude[down][right] < mapAltitude[x][y] && mapTexture[down][right] != MapTextureID.WATER) 
 									nextMapTexture[down][right] = MapTextureID.LAVA;
+							
 							}else if(rand == LAVE_GAUCHE) {
-								if(mapAltitude[x][left] < mapAltitude[x][y] && mapTexture[x][left] != MapTextureID.WATER)
-									nextMapTexture[x][left] = MapTextureID.LAVA;
-								if(mapAltitude[up][left] < mapAltitude[x][y] && mapTexture[up][left] != MapTextureID.WATER)
-									nextMapTexture[up][left] = MapTextureID.LAVA;
-								if(mapAltitude[down][left] < mapAltitude[x][y] && mapTexture[down][left] != MapTextureID.WATER)
-									nextMapTexture[down][left] = MapTextureID.LAVA;
+								if(mapAltitude[x][left] < mapAltitude[x][y] && mapTexture[x][left] != MapTextureID.WATER) 
+									nextMapTexture[x][left] = MapTextureID.LAVA;	
+								if(mapAltitude[up][left] < mapAltitude[x][y] && mapTexture[up][left] != MapTextureID.WATER) 
+									nextMapTexture[up][left] = MapTextureID.LAVA;	
+								if(mapAltitude[down][left] < mapAltitude[x][y] && mapTexture[down][left] != MapTextureID.WATER) 
+									nextMapTexture[down][left] = MapTextureID.LAVA;		
+								
 							}else if(rand == LAVE_HAUT) {
-								if(mapAltitude[up][left] < mapAltitude[x][y] && mapTexture[up][left] != MapTextureID.WATER)
+								if(mapAltitude[up][left] < mapAltitude[x][y] && mapTexture[up][left] != MapTextureID.WATER) 
 									nextMapTexture[up][left] = MapTextureID.LAVA;
-								if(mapAltitude[up][right] < mapAltitude[x][y] && mapTexture[up][right] != MapTextureID.WATER)
+								
+								if(mapAltitude[up][right] < mapAltitude[x][y] && mapTexture[up][right] != MapTextureID.WATER) 
 									nextMapTexture[up][right] = MapTextureID.LAVA;
-								nextMapTexture[down][y] = MapTextureID.LAVA;
-								if(mapAltitude[up][y] < mapAltitude[x][y] && mapTexture[up][y] != MapTextureID.WATER)
-									nextMapTexture[up][y] = MapTextureID.LAVA;
+
+								if(mapAltitude[up][y] < mapAltitude[x][y] && mapTexture[up][y] != MapTextureID.WATER) 
+									nextMapTexture[up][y] = MapTextureID.LAVA;		
 							}
 						}
 					}
 				}
-			}
-		}else {
-			for(int i = 0; i < mapTexture.length; i++) {
-				for(int j = 0; j < mapTexture[i].length; j++)
-					if(mapTexture[i][j] == MapTextureID.LAVA)
-						nextMapTexture[i][j] = MapTextureID.COLD_LAVA;
 			}
 		}
 		cpt_lave++;
@@ -328,7 +360,6 @@ public class WorldMap {
 
 			}
 		}
-
 		randomWildFire();
 		for (int x = 0; x < this.mapEntities.length; x++) {
 			for (int y = 0; y < this.mapEntities[0].length; y++) {
@@ -411,7 +442,7 @@ public class WorldMap {
 		
 		if(this.mapTexture[x][y] == MapTextureID.LAVA)
 			return MapEntitiesID.BURNING_TREE;
-		else if(is_raining == false &&(burn_up || burn_down || burn_left || burn_right || burn_down_left || burn_down_right || burn_up_left || burn_up_right || Math.random() < Ecosystem.P_SET_ON_FIRE))
+		else if(is_raining == false &&(burn_up || burn_down || burn_left || burn_right || burn_down_left || burn_down_right || burn_up_left || burn_up_right))
 			return MapEntitiesID.BURNING_TREE;
 		else 
 			return MapEntitiesID.GREEN_TREE;

@@ -38,15 +38,14 @@ public class Ecosystem extends JPanel implements KeyListener {
 	// interactions with the keyboard
 	boolean key_zone, key_aggro, key_season, key_lava, key_rain, key_path, key_agents, key_smooth;
 
-	public int duree_pluie = 0;
-	public static int darkness = 0;
+	public static int darkness = 0;			//permet de reduire la luminosite quand il pleut et il neige. darness varie grace a la methode drawDayNight(Graphics2D g2);
 	public static WorldMap map;
 
 	// Environment
-	public static int cpt, season;
-	public static Position spawn_pos;
+	public static int cpt_season, season;
 
 	// agents
+	public static Position spawn_pos;
 	public static ArrayList<Agent> agents;
 	public static ArrayList<Agent> tmp;
 	public static ArrayList<Elementaire> elements;
@@ -86,10 +85,10 @@ public class Ecosystem extends JPanel implements KeyListener {
 			Position revivingPosition = legalPosition.remove((int) (legalPosition.size() * Math.random()));
 			Player.revivingPosition = revivingPosition;
 		}
-		if (legalPosition.size() > 0) {
+		/*if (legalPosition.size() > 0) {
 			Position playerPosition = legalPosition.remove((int) (legalPosition.size() * Math.random()));
 			Ecosystem.agents.add(new Player(playerPosition));
-		}
+		}*/
 
 	}
 
@@ -145,9 +144,9 @@ public class Ecosystem extends JPanel implements KeyListener {
 	}
 
 	private void updateSeason() {
-		cpt++;
-		if (cpt == 100) {
-			cpt = 0;
+		cpt_season++;
+		if (cpt_season == 100) {
+			cpt_season = 0;
 			switch (season) {
 			case WINTER:
 				season = SPRING;
@@ -248,7 +247,7 @@ public class Ecosystem extends JPanel implements KeyListener {
 
 	}
 
-	private void drawDamage(Graphics2D g2) {
+	public void drawDamage(Graphics2D g2) {
 		for (int i = 0; i < agents.size(); i++) {
 			Agent agent = agents.get(i);
 			if (agent instanceof Player) {
@@ -275,7 +274,7 @@ public class Ecosystem extends JPanel implements KeyListener {
 
 	}
 
-	private void drawagentSkills(Graphics2D g2) {
+	public void drawagentSkills(Graphics2D g2) {
 		for (int i = 0; i < Ecosystem.agents.size(); i++) {
 			Agent agent = Ecosystem.agents.get(i);
 			if (agent instanceof Robot && ((Robot) agent).laserBeam) {
@@ -433,6 +432,7 @@ public class Ecosystem extends JPanel implements KeyListener {
 	}
 
 	private void drawPath(Graphics2D g2) {
+
 
 		for (Iterator<Agent> iterator = agents.iterator(); iterator.hasNext();) {
 			Agent agent = (Agent) iterator.next();
@@ -609,13 +609,12 @@ public class Ecosystem extends JPanel implements KeyListener {
 	// SPRING GROUND TEXTURES
 	private void draw_spring_ground(Graphics g2, int x, int y) {
 		if (map.is_raining) {
-			if (duree_pluie % 2 == 0)
+			if (map.cpt_pluie % 2 == 0)
 				g2.drawImage(SpriteLoader.loader.spring_rain, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
 						SPRITE_SIZE, this);
 			else
 				g2.drawImage(SpriteLoader.loader.spring_rain2, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
 						SPRITE_SIZE, this);
-			duree_pluie++;
 		} else
 			g2.drawImage(SpriteLoader.loader.spring_grass, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE, SPRITE_SIZE,
 					this);
@@ -624,13 +623,12 @@ public class Ecosystem extends JPanel implements KeyListener {
 	// SUMMER GROUND TEXTURES
 	private void draw_summer_ground(Graphics g2, int x, int y) {
 		if (map.is_raining) {
-			if (duree_pluie % 2 == 0)
+			if (map.cpt_pluie % 2 == 0)
 				g2.drawImage(SpriteLoader.loader.summer_rain, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
 						SPRITE_SIZE, this);
 			else
 				g2.drawImage(SpriteLoader.loader.summer_rain2, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
 						SPRITE_SIZE, this);
-			duree_pluie++;
 		} else
 			g2.drawImage(SpriteLoader.loader.summer_grass, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE, SPRITE_SIZE,
 					this);
@@ -645,7 +643,6 @@ public class Ecosystem extends JPanel implements KeyListener {
 			else
 				g2.drawImage(SpriteLoader.loader.fall_rain2, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE, SPRITE_SIZE,
 						this);
-			duree_pluie++;
 		} else
 			g2.drawImage(SpriteLoader.loader.fall_grass, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE, SPRITE_SIZE,
 					this);
@@ -660,7 +657,6 @@ public class Ecosystem extends JPanel implements KeyListener {
 			else
 				g2.drawImage(SpriteLoader.loader.winter_snow2, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE,
 						SPRITE_SIZE, this);
-			duree_pluie++;
 		} else
 			g2.drawImage(SpriteLoader.loader.snow, x * SPRITE_SIZE, y * SPRITE_SIZE, SPRITE_SIZE, SPRITE_SIZE, this);
 	}
@@ -911,21 +907,32 @@ public class Ecosystem extends JPanel implements KeyListener {
 
 	@Override
 	public void keyPressed(KeyEvent e) {
-
+		// TODO Auto-generated method stub
 		if (e.getKeyCode() == KeyEvent.VK_P) {
 			map.is_raining = !map.is_raining;
 
 		} else if (e.getKeyCode() == KeyEvent.VK_S)
 			changeSeason();
 		else if (e.getKeyCode() == KeyEvent.VK_L) {
-			map.lave_coule = !map.lave_coule;
+			if(map.lave_coule == true)
+				map.lave_coule = false;
+			else if(map.lave_coule == false && map.is_there_lava() == false)
+				map.lave_coule = !map.lave_coule;
+			else if(map.lave_coule == false && map.is_there_lava())
+				return;
 		} else if (e.getKeyCode() == KeyEvent.VK_RIGHT)
 			Life.delai += 2;
 		else if (e.getKeyCode() == KeyEvent.VK_LEFT) {
-			if (Life.delai == 0)
+			if (Life.delai <= 0)
 				Life.delai = 0;
-			else
-				Life.delai -= 2;
+			else{
+			
+				Life.delai -= 5;
+				if(Life.delai < 0){
+				Life.delai = 0;
+				}
+			}
+				
 		} else if (e.getKeyCode() == KeyEvent.VK_Z)
 			key_zone = !key_zone;
 		else if (e.getKeyCode() == KeyEvent.VK_A)
@@ -934,15 +941,17 @@ public class Ecosystem extends JPanel implements KeyListener {
 			key_path = !this.key_path;
 		else if (e.getKeyCode() == KeyEvent.VK_R)
 			this.key_agents = !this.key_agents;
-		else if (e.getKeyCode() == KeyEvent.VK_N) {
+		else if(e.getKeyCode() == KeyEvent.VK_N) {
 			Ecosystem.map = new WorldMap();
-			season = (int) (Math.random() * 4);
+			season = (int)(Math.random()*4);
 			initAgents();
-		} else if (e.getKeyCode() == KeyEvent.VK_T)
+		}
+		else if(e.getKeyCode()==KeyEvent.VK_T)
 			key_smooth = !key_smooth;
-		else if (e.getKeyCode() == KeyEvent.VK_C)
+		else if(e.getKeyCode() == KeyEvent.VK_C)
 			System.exit(1);
 	}
+
 
 	public void keyReleased(KeyEvent e) {
 

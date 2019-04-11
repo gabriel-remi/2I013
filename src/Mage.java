@@ -30,10 +30,10 @@ public class Mage extends Agent {
 					.moduloWidth(this.player.cur_pos.x + 5); x++) {
 				for (int y = this.moduloWidth(this.player.cur_pos.y - 5); y < this
 						.moduloWidth(this.player.cur_pos.y + 5); y++) {
-					if (Ecosystem.map.getMapEntities()[x][y] == MapEntitiesID.GREEN_TREE
-							|| Ecosystem.map.getMapEntities()[x][y] == MapEntitiesID.BABY_GREEN_TREE
-							|| Ecosystem.map.getMapEntities()[x][y] == MapEntitiesID.YOUNG_GREEN_TREE) {
-						Ecosystem.map.getMapEntities()[x][y] = MapEntitiesID.BURNING_TREE;
+					if (Ecosystem.map.getMapEntities()[this.moduloWidth(x)][this.moduloHeight(y)] == MapEntitiesID.GREEN_TREE
+							|| Ecosystem.map.getMapEntities()[this.moduloWidth(x)][this.moduloHeight(y)] == MapEntitiesID.BABY_GREEN_TREE
+							|| Ecosystem.map.getMapEntities()[this.moduloWidth(x)][this.moduloHeight(y)] == MapEntitiesID.YOUNG_GREEN_TREE) {
+						Ecosystem.map.getMapEntities()[this.moduloWidth(x)][this.moduloHeight(y)] = MapEntitiesID.BURNING_TREE;
 					}
 				}
 			}
